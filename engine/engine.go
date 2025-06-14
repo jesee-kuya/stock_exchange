@@ -1,4 +1,4 @@
-package models
+package engine
 
 // Engine is the main structure for executing and optimizing
 // the scheduling process defined in a configuration file
