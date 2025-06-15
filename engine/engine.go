@@ -10,6 +10,10 @@ type Engine struct {
 	OptimizeTargets []string
 }
 
+// Stock represents the available items and their quantities.
+type Stock struct {
+	Items map[string]int
+}
 
 type Process struct {
 	Name   string
