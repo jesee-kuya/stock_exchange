@@ -1,10 +1,10 @@
 package process
 
 import (
-	"github.com/jesee-kuya/stock_exchange/models"
+	"github.com/jesee-kuya/stock_exchange/engine"
 )
 
-func (p *models.Process) Run(stocks map[string]int) {
+func (p *engine.Process) Run(stocks map[string]int) {
 	// Deduct input items from the stock
 	for item, requiredQty := range p.Input {
 		stocks[item] -= requiredQty
