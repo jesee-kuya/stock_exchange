@@ -9,3 +9,8 @@ type Engine struct {
 	Cycle           int
 	OptimizeTargets []string
 }
+
+// Stock represents the available items and their quantities.
+type Stock struct {
+	Items map[string]int
+}
