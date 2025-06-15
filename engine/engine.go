@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/jesee-kuya/stock_exchange/process"
 )
@@ -31,7 +32,15 @@ func (e *Engine) LoadConfig(path string) error {
 	}
 	defer file.Close()
 
-	
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+	}
 
 	return nil
 }
