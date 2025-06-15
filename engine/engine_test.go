@@ -35,4 +35,16 @@ func TestSaveLog(t *testing.T) {
 			t.Errorf("File content mismatch. got %v but expected %v", content, want)
 		}
 	})
+
+	t.Run("empty path string", func(t *testing.T) {
+		engine := &Engine{
+			Schedule: []string{"1:test_process"},
+		}
+
+		err := engine.SaveLog("")
+
+		if err == nil {
+			t.Error("SaveLog() should return error for empty path")
+		}
+	})
 }
