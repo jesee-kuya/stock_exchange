@@ -9,3 +9,10 @@ type Engine struct {
 	Cycle           int
 	OptimizeTargets []string
 }
+
+
+type Process struct {
+	Name   string
+	Input  map[string]int
+	Output map[string]int
+}
