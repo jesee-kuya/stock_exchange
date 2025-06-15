@@ -1,10 +1,12 @@
 package engine
 
+import "github.com/jesee-kuya/stock_exchange/process"
+
 // Engine is the main structure for executing and optimizing
 // the scheduling process defined in a configuration file
 type Engine struct {
 	Stock           *Stock
-	Processes       []*Process
+	Processes       []*process.Process
 	Schedule        []string
 	Cycle           int
 	OptimizeTargets []string
