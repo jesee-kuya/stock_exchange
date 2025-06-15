@@ -16,3 +16,10 @@ type Engine struct {
 type Stock struct {
 	Items map[string]int
 }
+
+// ScheduleEntry represents a single entry in the execution schedule.
+// It contains the cycle number when a process should start and the process name.
+type ScheduleEntry struct {
+	Cycle       int
+	ProcessName string
+}
