@@ -14,9 +14,3 @@ type Engine struct {
 type Stock struct {
 	Items map[string]int
 }
-
-type Process struct {
-	Name   string
-	Input  map[string]int
-	Output map[string]int
-}
