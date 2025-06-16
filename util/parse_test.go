@@ -15,6 +15,7 @@ func TestParseLine(t *testing.T) {
 		{"parse stock", "cabinet:1"},
 		{"parse optimize", "optimize:(time;cabinet)"},
 		{"parse process", "do_shelf:(board:1):(shelf:1):10"},
+		{"parse more items", "do_cabinet:(doorknobs:2;background:1;shelf:3):(cabinet:1):30"},
 	}
 
 	for _, tc := range testCases {
