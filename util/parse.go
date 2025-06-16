@@ -136,8 +136,8 @@ func parseProcess(config *ConfigData, line string) error {
 		return fmt.Errorf("invalid process format: %s", line)
 	}
 
-	needs := parseResourceBlock(parts[0])
-	results := parseResourceBlock(parts[1])
+	needs, _ := parseResourceMap(parts[0])
+	results, _ := parseResourceMap(parts[1])
 	cycle, err := strconv.Atoi(strings.TrimSpace(parts[2]))
 	if err != nil {
 		return fmt.Errorf("invalid cycle count '%s': %w", parts[2], err)
@@ -155,18 +155,32 @@ func parseProcess(config *ConfigData, line string) error {
 }
 
 // parseResourceBlock parses a string like "(a:1;b:2)" into map[string]int
-func parseResourceBlock(block string) map[string]int {
-	block = strings.Trim(block, "()")
-	items := strings.Split(block, ";")
-	result := make(map[string]int)
+func parseResourceMap(blockStr string) (map[string]int, error) {
+	resources := make(map[string]int)
+	blockStr = strings.Trim(blockStr, "()")
+	if blockStr == "" {
+		return resources, nil
+	}
+
+	// Split by semicolon to get individual resource:quantity pairs
+	items := strings.Split(blockStr, ";")
 	for _, item := range items {
-		parts := strings.Split(item, ":")
-		if len(parts) != 2 {
+		item = strings.TrimSpace(item)
+		if item == "" {
 			continue
 		}
+
+		// Split by colon to get resource name and quantity
+		parts := strings.Split(item, ":")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid resource format: %s", item)
+		}
 		name := strings.TrimSpace(parts[0])
-		qty, _ := strconv.Atoi(strings.TrimSpace(parts[1]))
-		result[name] = qty
+		quantity, err := strconv.Atoi(strings.TrimSpace(parts[1]))
+		if err != nil {
+			return nil, fmt.Errorf("invalid resource quantity '%v': %w", quantity, err)
+		}
+		resources[name] = quantity
 	}
-	return result
+	return resources, nil
 }
