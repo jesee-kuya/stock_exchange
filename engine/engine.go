@@ -67,8 +67,6 @@ func (e *Engine) Run(waitingTime string) {
                 e.Stock.Items[item] -= qty
             }
 
-            // Simulate process duration (proc.Cycle)
-            // For simplicity, we assume process finishes in this cycle and adds results immediately
             for item, qty := range proc.Result {
                 e.Stock.Items[item] += qty
             }
