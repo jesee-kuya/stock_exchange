@@ -13,6 +13,8 @@ func (c *Checker) LoadConfig(path string) error {
 	}
 	// Populate checker fields
 	c.Stocks = configData.Stocks
+	c.Processes = configData.Processes
+	// Note: Checker doesn't need OptimizeTargets at this point
 
 	return nil
 }
