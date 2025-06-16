@@ -44,6 +44,9 @@ func (c *Checker) Verify() error {
 			}
 		}
 
+		for item, qty := range proc.Needs {
+			stocks[item] -= qty
+		}
 	}
 
 	return nil
