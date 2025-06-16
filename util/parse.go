@@ -131,42 +131,13 @@ func parseProcess(config *ConfigData, line string) error {
 	fmt.Println("name: ", name)
 	fmt.Println("rest: ", rest)
 
-	parts := strings.Split(rest, "):")
-	if len(parts) != 3 {
-		return fmt.Errorf("invalid process format: %s", line)
-	}
-
-	needs := parseResourceBlock(parts[0])
-	results := parseResourceBlock(parts[1])
-	cycle, err := strconv.Atoi(strings.TrimSpace(parts[2]))
-	if err != nil {
-		return fmt.Errorf("invalid cycle count '%s': %w", parts[2], err)
-	}
-
 	proc := &process.Process{
-		Name:   name,
-		Needs:  needs,
-		Result: results,
-		Cycle:  cycle,
+		Name: name,
+		// Needs:  needs,
+		// Result: results,
+		// Cycle:  cycle,
 	}
 
 	config.Processes = append(config.Processes, proc)
 	return nil
-}
-
-// parseResourceBlock parses a string like "(a:1;b:2)" into map[string]int
-func parseResourceBlock(block string) map[string]int {
-	block = strings.Trim(block, "()")
-	items := strings.Split(block, ";")
-	result := make(map[string]int)
-	for _, item := range items {
-		parts := strings.Split(item, ":")
-		if len(parts) != 2 {
-			continue
-		}
-		name := strings.TrimSpace(parts[0])
-		qty, _ := strconv.Atoi(strings.TrimSpace(parts[1]))
-		result[name] = qty
-	}
-	return result
 }
