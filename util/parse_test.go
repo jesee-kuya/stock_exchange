@@ -9,6 +9,7 @@ func TestParseLine(t *testing.T) {
 		rawData string
 	}{
 		{"parse stock", "cabinet:1"},
+		{"parse optimize", "optimize:(time;cabinet)"},
 	}
 
 	for _, tc := range testCases {
