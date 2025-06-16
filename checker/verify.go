@@ -6,5 +6,8 @@ func (c *Checker) Verify() error {
 		stocks[k] = v
 	}
 
+	pending := make(map[int]map[string]int)
+	currentCycle := 0
+
 	return nil
 }
