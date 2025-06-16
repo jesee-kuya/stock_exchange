@@ -47,6 +47,14 @@ func (c *Checker) Verify() error {
 		for item, qty := range proc.Needs {
 			stocks[item] -= qty
 		}
+
+		dueCycle := entry.Cycle + proc.Cycle
+		if pending[dueCycle] == nil {
+			pending[dueCycle] = make(map[string]int)
+		}
+		for item, qty := range proc.Result {
+			pending[dueCycle][item] += qty
+		}
 	}
 
 	return nil
