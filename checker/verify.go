@@ -37,6 +37,13 @@ func (c *Checker) Verify() error {
 			return fmt.Errorf("unknown process '%s' at cycle %d", entry.Name, entry.Cycle)
 		}
 
+		for item, qty := range proc.Needs {
+			if stocks[item] < qty {
+				return fmt.Errorf("insufficient stock for '%s' at cycle %d: need %d %s, have %d",
+					proc.Name, entry.Cycle, qty, item, stocks[item])
+			}
+		}
+
 	}
 
 	return nil
