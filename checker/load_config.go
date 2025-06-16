@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // LoadConfig parses a configuration file and populates the Checker with
@@ -16,6 +17,17 @@ func (c *Checker) LoadConfig(path string) error {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+	lineNumber := 0
+
+	for scanner.Scan() {
+		lineNumber++
+		line := strings.TrimSpace(scanner.Text())
+
+		// Skip empty lines and comments
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+	}
 
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error reading config file: %w", err)
