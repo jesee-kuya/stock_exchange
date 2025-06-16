@@ -1,6 +1,10 @@
 package util
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/jesee-kuya/stock_exchange/process"
+)
 
 func TestParseLine(t *testing.T) {
 	// configData := &ConfigData{}
@@ -10,12 +14,15 @@ func TestParseLine(t *testing.T) {
 	}{
 		{"parse stock", "cabinet:1"},
 		{"parse optimize", "optimize:(time;cabinet)"},
+		{"parse process", "do_shelf:(board:1):(shelf:1):10"},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			configData := &ConfigData{
-				Stocks: map[string]int{},
+				Stocks:          map[string]int{},
+				Processes:       []*process.Process{},
+				OptimizeTargets: []string{},
 			}
 			err := parseLine(configData, tc.rawData)
 			if err != nil {
@@ -23,15 +30,4 @@ func TestParseLine(t *testing.T) {
 			}
 		})
 	}
-	t.Run("parse stock", func(t *testing.T) {
-		ConfigData := &ConfigData{
-			Stocks: map[string]int{},
-		}
-		rawData := "cabinet:1"
-
-		err := parseLine(ConfigData, rawData)
-		if err != nil {
-			t.Errorf("%v", err)
-		}
-	})
 }
