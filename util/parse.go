@@ -131,11 +131,23 @@ func parseProcess(config *ConfigData, line string) error {
 	fmt.Println("name: ", name)
 	fmt.Println("rest: ", rest)
 
+	parts := strings.Split(rest, "):")
+	if len(parts) != 3 {
+		return fmt.Errorf("invalid process format: %s", line)
+	}
+
+	needs := parseResourceBlock(parts[0])
+	results := parseResourceBlock(parts[1])
+	cycle, err := strconv.Atoi(strings.TrimSpace(parts[2]))
+	if err != nil {
+		return fmt.Errorf("invalid cycle count '%s': %w", parts[2], err)
+	}
+
 	proc := &process.Process{
-		Name: name,
-		// Needs:  needs,
-		// Result: results,
-		// Cycle:  cycle,
+		Name:   name,
+		Needs:  needs,
+		Result: results,
+		Cycle:  cycle,
 	}
 
 	config.Processes = append(config.Processes, proc)
