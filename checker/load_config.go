@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -27,10 +28,43 @@ func (c *Checker) LoadConfig(path string) error {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
+
+		// Parse the line based on its format
+		if err := c.parseLine(line, lineNumber); err != nil {
+			return fmt.Errorf("error parsing line %d: %w", lineNumber, err)
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		return fmt.Errorf("error reading config file: %w", err)
 	}
+	return nil
+}
+
+// parseLine parses a single line from the configuration file
+func (c *Checker) parseLine(line string, lineNumber int) error {
+	// Check if it's a stock definition (name:quantity)
+	if !strings.Contains(line, "(") && strings.Contains(line, ":") && !strings.HasPrefix(line, "optimize:") {
+		return c.parseStock(line)
+	}
+	return fmt.Errorf("unrecognized line format: %s", line)
+}
+
+// parseStock parses a stock line in format "name:quantity"
+func (c *Checker) parseStock(line string) error {
+	parts := strings.Split(line, ":")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid stock format: %s", line)
+	}
+
+	name := strings.TrimSpace(parts[0])
+	quantityStr := strings.TrimSpace(parts[1])
+
+	quantity, err := strconv.Atoi(quantityStr)
+	if err != nil {
+		return fmt.Errorf("invalid stock quantity '%s': %w", quantityStr, err)
+	}
+
+	c.Stocks[name] = quantity
 	return nil
 }
