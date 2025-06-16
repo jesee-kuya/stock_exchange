@@ -43,7 +43,7 @@ func (e *Engine) LoadConfig(path string) error {
 
 func (e *Engine) Run(waitingTime string) {
     e.Cycle = 0
-    maxIdleCycles := 1000 // Prevent infinite loops (adjust as needed)
+    maxIdleCycles := 1000 
     idleCycles := 0
 
     for {
