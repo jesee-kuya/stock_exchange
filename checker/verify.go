@@ -57,5 +57,11 @@ func (c *Checker) Verify() error {
 		}
 	}
 
+	for _, outputs := range pending {
+		for item, qty := range outputs {
+			stocks[item] += qty
+		}
+	}
+
 	return nil
 }
