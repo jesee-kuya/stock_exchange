@@ -68,6 +68,11 @@ func parseLine(config *ConfigData, line string) error {
 		return parseOptimize(config, line)
 	}
 
+	// Check if it's a process definition (contains parentheses)
+	if strings.Contains(line, "(") && strings.Contains(line, ")") {
+		return parseProcess(config, line)
+	}
+
 	return fmt.Errorf("unrecognized line format: %s", line)
 }
 
@@ -110,4 +115,58 @@ func parseOptimize(config *ConfigData, line string) error {
 	}
 
 	return nil
+}
+
+// parseProcess parses a process line in format "name:(needs):(results):cycles"
+func parseProcess(config *ConfigData, line string) error {
+	// Find the first colon to separate name from the rest
+	colonIndex := strings.Index(line, ":")
+	if colonIndex == -1 {
+		return fmt.Errorf("invalid process format: %s", line)
+	}
+
+	name := strings.TrimSpace(line[:colonIndex])
+	rest := line[colonIndex+1:]
+
+	fmt.Println("name: ", name)
+	fmt.Println("rest: ", rest)
+
+	parts := strings.Split(rest, "):")
+	if len(parts) != 3 {
+		return fmt.Errorf("invalid process format: %s", line)
+	}
+
+	needs := parseResourceBlock(parts[0])
+	results := parseResourceBlock(parts[1])
+	cycle, err := strconv.Atoi(strings.TrimSpace(parts[2]))
+	if err != nil {
+		return fmt.Errorf("invalid cycle count '%s': %w", parts[2], err)
+	}
+
+	proc := &process.Process{
+		Name:   name,
+		Needs:  needs,
+		Result: results,
+		Cycle:  cycle,
+	}
+
+	config.Processes = append(config.Processes, proc)
+	return nil
+}
+
+// parseResourceBlock parses a string like "(a:1;b:2)" into map[string]int
+func parseResourceBlock(block string) map[string]int {
+	block = strings.Trim(block, "()")
+	items := strings.Split(block, ";")
+	result := make(map[string]int)
+	for _, item := range items {
+		parts := strings.Split(item, ":")
+		if len(parts) != 2 {
+			continue
+		}
+		name := strings.TrimSpace(parts[0])
+		qty, _ := strconv.Atoi(strings.TrimSpace(parts[1]))
+		result[name] = qty
+	}
+	return result
 }
