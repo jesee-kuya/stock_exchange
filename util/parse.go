@@ -45,7 +45,7 @@ func ParseConfig(path string) (*ConfigData, error) {
 		}
 
 		// Parse the line based on its format
-		if err := parseLine(config, line, lineNumber); err != nil {
+		if err := parseLine(config, line); err != nil {
 			return nil, fmt.Errorf("error parsing line %d: %w", lineNumber, err)
 		}
 	}
@@ -57,11 +57,17 @@ func ParseConfig(path string) (*ConfigData, error) {
 }
 
 // parseLine parses a single line from the configuration file
-func parseLine(config *ConfigData, line string, lineNumber int) error {
+func parseLine(config *ConfigData, line string) error {
 	// Check if it's a stock definition (name:quantity)
 	if !strings.Contains(line, "(") && strings.Contains(line, ":") && !strings.HasPrefix(line, "optimize:") {
 		return parseStock(config, line)
 	}
+
+	// Check if it's an optimize line
+	if strings.HasPrefix(line, "optimize:") {
+		return parseOptimize(config, line)
+	}
+
 	return fmt.Errorf("unrecognized line format: %s", line)
 }
 
@@ -81,5 +87,27 @@ func parseStock(config *ConfigData, line string) error {
 	}
 
 	config.Stocks[name] = quantity
+	return nil
+}
+
+// parseOptimize parses the optimize line and extracts target list
+func parseOptimize(config *ConfigData, line string) error {
+	// Remove "optimize:" prefix and parse the targets
+	targetsPart := strings.TrimPrefix(line, "optimize:")
+	targetsPart = strings.Trim(targetsPart, "()")
+
+	if targetsPart == "" {
+		return nil
+	}
+
+	// Split by semicolon to get individual targets
+	targets := strings.Split(targetsPart, ";")
+	for _, target := range targets {
+		target = strings.TrimSpace(target)
+		if target != "" {
+			config.OptimizeTargets = append(config.OptimizeTargets, target)
+		}
+	}
+
 	return nil
 }
