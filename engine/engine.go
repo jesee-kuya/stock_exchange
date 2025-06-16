@@ -1,12 +1,10 @@
 package engine
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"strings"
 
 	"github.com/jesee-kuya/stock_exchange/process"
+	"github.com/jesee-kuya/stock_exchange/util"
 )
 
 // Engine is the main structure for executing and optimizing
@@ -24,23 +22,21 @@ type Stock struct {
 	Items map[string]int
 }
 
+
+type ScheduleEntry struct {
+	Cycle       int
+	ProcessName string
+}
+
 func (e *Engine) LoadConfig(path string) error {
-	file, err := os.Open(path)
-
+	config, err := util.ParseConfig(path)
 	if err != nil {
-		return fmt.Errorf("failed to open config file: %w", err)
+		return fmt.Errorf("failed to parse config: %w", err)
 	}
-	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-	}
+	e.Stock = &Stock{Items: config.Stocks}
+	e.Processes = config.Processes
+	e.OptimizeTargets = config.OptimizeTargets
 
 	return nil
 }
