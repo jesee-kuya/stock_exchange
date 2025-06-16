@@ -63,5 +63,11 @@ func (c *Checker) Verify() error {
 		}
 	}
 
+	fmt.Println("Trace completed. No error detected.")
+	fmt.Println("Final stocks:")
+	for item, qty := range stocks {
+		fmt.Printf("  %s => %d\n", item, qty)
+	}
+
 	return nil
 }
