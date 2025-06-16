@@ -28,6 +28,16 @@ type ScheduleEntry struct {
 	ProcessName string
 }
 
+
+// LoadConfig loads the engine configuration from the specified file path.
+// It parses the configuration file, initializes the Stock, Processes, and OptimizeTargets
+// fields of the Engine based on the parsed data, and returns an error if parsing fails.
+//
+// Parameters:
+//   - path: The file path to the configuration file.
+//
+// Returns:
+//   - error: An error if the configuration could not be parsed, otherwise nil.
 func (e *Engine) LoadConfig(path string) error {
 	config, err := util.ParseConfig(path)
 	if err != nil {
