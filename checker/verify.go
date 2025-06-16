@@ -1,5 +1,11 @@
 package checker
 
+import (
+	"fmt"
+
+	"github.com/jesee-kuya/stock_exchange/process"
+)
+
 func (c *Checker) Verify() error {
 	stocks := make(map[string]int)
 	for k, v := range c.Stocks {
@@ -19,6 +25,18 @@ func (c *Checker) Verify() error {
 			}
 		}
 		currentCycle = entry.Cycle
+
+		var proc *process.Process
+		for _, p := range c.Processes {
+			if p.Name == entry.Name {
+				proc = p
+				break
+			}
+		}
+		if proc == nil {
+			return fmt.Errorf("unknown process '%s' at cycle %d", entry.Name, entry.Cycle)
+		}
+
 	}
 
 	return nil
