@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
@@ -13,5 +14,11 @@ func (c *Checker) LoadConfig(path string) error {
 		return fmt.Errorf("failed to open config file: %w", err)
 	}
 	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("error reading config file: %w", err)
+	}
 	return nil
 }
