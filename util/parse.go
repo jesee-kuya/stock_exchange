@@ -153,3 +153,20 @@ func parseProcess(config *ConfigData, line string) error {
 	config.Processes = append(config.Processes, proc)
 	return nil
 }
+
+// parseResourceBlock parses a string like "(a:1;b:2)" into map[string]int
+func parseResourceBlock(block string) map[string]int {
+	block = strings.Trim(block, "()")
+	items := strings.Split(block, ";")
+	result := make(map[string]int)
+	for _, item := range items {
+		parts := strings.Split(item, ":")
+		if len(parts) != 2 {
+			continue
+		}
+		name := strings.TrimSpace(parts[0])
+		qty, _ := strconv.Atoi(strings.TrimSpace(parts[1]))
+		result[name] = qty
+	}
+	return result
+}
