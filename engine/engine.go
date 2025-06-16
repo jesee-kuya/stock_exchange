@@ -40,3 +40,59 @@ func (e *Engine) LoadConfig(path string) error {
 
 	return nil
 }
+
+func (e *Engine) Run(waitingTime string) {
+    e.Cycle = 0
+    maxIdleCycles := 1000 // Prevent infinite loops (adjust as needed)
+    idleCycles := 0
+
+    for {
+        executed := false
+
+        for _, proc := range e.Processes {
+            // Check if process can run (enough stock for needs)
+            canRun := true
+            for item, qty := range proc.Needs {
+                if e.Stock.Items[item] < qty {
+                    canRun = false
+                    break
+                }
+            }
+            if !canRun {
+                continue
+            }
+
+            // Deduct needs from stock
+            for item, qty := range proc.Needs {
+                e.Stock.Items[item] -= qty
+            }
+
+            // Simulate process duration (proc.Cycle)
+            // For simplicity, we assume process finishes in this cycle and adds results immediately
+            for item, qty := range proc.Result {
+                e.Stock.Items[item] += qty
+            }
+
+            // Log execution
+            fmt.Printf("Cycle %d: Executed process %s\n", e.Cycle, proc.Name)
+            executed = true
+        }
+
+        e.Cycle++
+
+        // Simulate waiting time between cycles
+        util.Wait(waitingTime)
+
+        if !executed {
+            idleCycles++
+        } else {
+            idleCycles = 0
+        }
+
+        // Stop if no process was executed for maxIdleCycles
+        if idleCycles >= maxIdleCycles {
+            fmt.Println("No more executable processes or max idle cycles reached. Stopping simulation.")
+            break
+        }
+    }
+}
