@@ -12,10 +12,14 @@ func (c *Checker) Verify() error {
 		stocks[k] = v
 	}
 
+	// Pending outputs map: cycle -> items
 	pending := make(map[int]map[string]int)
 	currentCycle := 0
 
 	for _, entry := range c.Log {
+		fmt.Printf("Evaluating: %d:%s\n", entry.Cycle, entry.Name)
+
+		// Apply any pending outputs from prior cycles
 		for cycle := currentCycle; cycle <= entry.Cycle; cycle++ {
 			if outputs, ok := pending[cycle]; ok {
 				for item, qty := range outputs {
@@ -26,6 +30,7 @@ func (c *Checker) Verify() error {
 		}
 		currentCycle = entry.Cycle
 
+		// Find the process
 		var proc *process.Process
 		for _, p := range c.Processes {
 			if p.Name == entry.Name {
@@ -37,6 +42,7 @@ func (c *Checker) Verify() error {
 			return fmt.Errorf("unknown process '%s' at cycle %d", entry.Name, entry.Cycle)
 		}
 
+		// Check if enough stock exists
 		for item, qty := range proc.Needs {
 			if stocks[item] < qty {
 				return fmt.Errorf("insufficient stock for '%s' at cycle %d: need %d %s, have %d",
@@ -44,10 +50,12 @@ func (c *Checker) Verify() error {
 			}
 		}
 
+		// Deduct input from stocks
 		for item, qty := range proc.Needs {
 			stocks[item] -= qty
 		}
 
+		// Schedule outputs
 		dueCycle := entry.Cycle + proc.Cycle
 		if pending[dueCycle] == nil {
 			pending[dueCycle] = make(map[string]int)
@@ -57,6 +65,7 @@ func (c *Checker) Verify() error {
 		}
 	}
 
+	// Flush remaining pending outputs
 	for _, outputs := range pending {
 		for item, qty := range outputs {
 			stocks[item] += qty
@@ -64,10 +73,5 @@ func (c *Checker) Verify() error {
 	}
 
 	fmt.Println("Trace completed. No error detected.")
-	fmt.Println("Final stocks:")
-	for item, qty := range stocks {
-		fmt.Printf("  %s => %d\n", item, qty)
-	}
-
 	return nil
 }
