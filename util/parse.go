@@ -95,6 +95,18 @@ func parseLine(config *ConfigData, line string) error {
 	return fmt.Errorf("unrecognized line format: %s", line)
 }
 
+// parseStock parses a single line of stock data and updates the provided ConfigData.
+//
+// The expected format for the line is: "item_name:quantity" (e.g., "euro:10").
+// It splits the line at the colon, trims whitespace, and converts the quantity to an integer.
+// If parsing succeeds, the item and its quantity are added to the config's Stocks map.
+//
+// Parameters:
+//   - config: a pointer to the ConfigData struct to be updated.
+//   - line: a string representing one line of stock information.
+//
+// Returns:
+//   - An error if the line format is invalid or the quantity is not a valid integer.
 func parseStock(config *ConfigData, line string) error {
 	parts := strings.Split(line, ":")
 	if len(parts) != 2 {
@@ -113,7 +125,23 @@ func parseStock(config *ConfigData, line string) error {
 	return nil
 }
 
-// parseOptimize parses the optimize line and extracts target list
+// parseOptimize parses an optimization target line and updates the provided ConfigData.
+//
+// The expected format for the line is: "optimize:(target1;target2;...;targetN)".
+// For example: "optimize:(euro;material;energy)"
+//
+// Behavior:
+//   - Strips the "optimize:" prefix.
+//   - Removes surrounding parentheses.
+//   - Splits the remaining string by semicolons to extract individual optimization targets.
+//   - Appends non-empty trimmed targets to config.OptimizeTargets.
+//
+// Parameters:
+//   - config: a pointer to the ConfigData struct to be updated.
+//   - line: a string representing the line containing optimization targets.
+//
+// Returns:
+//   - An error (always nil in current implementation), allowing future extensibility for validation.
 func parseOptimize(config *ConfigData, line string) error {
 	// Remove "optimize:" prefix and parse the targets
 	targetsPart := strings.TrimPrefix(line, "optimize:")
@@ -135,7 +163,6 @@ func parseOptimize(config *ConfigData, line string) error {
 	return nil
 }
 
-// parseProcess parses a process line in format "name:(needs):(results):cycles"
 func parseProcess(config *ConfigData, line string) error {
 	// Find the first colon to separate name from the rest
 	colonIndex := strings.Index(line, ":")
