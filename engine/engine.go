@@ -40,14 +40,24 @@ func (e *Engine) LoadConfig(path string) error {
 	return nil
 }
 
+
+
+// Run executes the main simulation loop of the Engine for a specified duration.
+// The waitingTime parameter is a string representing the maximum simulation time,
+// which is parsed into a number of cycles. In each cycle, the function processes
+// running processes, updates the stock with completed process results, and attempts
+// to schedule new processes if their resource requirements are met. The simulation
+// ends when the maximum number of cycles is reached or no more processes can be executed.
+// The function prints detailed information about each cycle, including resource usage,
+// process scheduling, and simulation status.
 func (e *Engine) Run(waitingTime string) {
 	maxCycles, err := util.ParseDuration(waitingTime)
 	if err != nil {
-		fmt.Printf("Invalid waiting time: %v\n", err)
+		fmt.Printf("Invalid Cycle: %v\n", err)
 		return
 	}
 
-	fmt.Printf("Starting simulation (max cycles: %d)\n", maxCycles)
+	fmt.Printf("Main Processes:\n")
 
 	type runningProcess struct {
 		Process *process.Process
