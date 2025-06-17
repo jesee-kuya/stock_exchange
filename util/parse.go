@@ -10,7 +10,13 @@ import (
 	"github.com/jesee-kuya/stock_exchange/process"
 )
 
-// ConfigData represents the parsed configuration data
+// ConfigData holds the parsed configuration data for the stock exchange system.
+// It includes the initial stock quantities, the list of processes, and the optimization targets.
+//
+// Fields:
+//   - Stocks: a map where the key is the stock name and the value is the initial quantity.
+//   - Processes: a slice of pointers to Process structs, each representing a process definition.
+//   - OptimizeTargets: a slice of strings specifying the optimization goals extracted from the config file.
 type ConfigData struct {
 	Stocks          map[string]int
 	Processes       []*process.Process
@@ -163,7 +169,6 @@ func parseProcess(config *ConfigData, line string) error {
 	return nil
 }
 
-// parseResourceBlock parses a string like "(a:1;b:2)" into map[string]int
 func parseResourceMap(blockStr string) (map[string]int, error) {
 	resources := make(map[string]int)
 	blockStr = strings.Trim(blockStr, "()")
@@ -171,7 +176,6 @@ func parseResourceMap(blockStr string) (map[string]int, error) {
 		return resources, nil
 	}
 
-	// Split by semicolon to get individual resource:quantity pairs
 	items := strings.Split(blockStr, ";")
 	for _, item := range items {
 		item = strings.TrimSpace(item)
@@ -179,7 +183,6 @@ func parseResourceMap(blockStr string) (map[string]int, error) {
 			continue
 		}
 
-		// Split by colon to get resource name and quantity
 		parts := strings.Split(item, ":")
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid resource format: %s", item)
