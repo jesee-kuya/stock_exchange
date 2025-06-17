@@ -22,7 +22,6 @@ type Stock struct {
 	Items map[string]int
 }
 
-
 type ScheduleEntry struct {
 	Cycle       int
 	ProcessName string
@@ -42,55 +41,71 @@ func (e *Engine) LoadConfig(path string) error {
 }
 
 func (e *Engine) Run(waitingTime string) {
-    e.Cycle = 0
-    maxIdleCycles := 1000 
-    idleCycles := 0
+	maxCycles, err := util.ParseDuration(waitingTime)
+	if err != nil {
+		fmt.Printf("Invalid waiting time: %v\n", err)
+		return
+	}
 
-    for {
-        executed := false
+	fmt.Printf("Starting simulation (max cycles: %d)\n", maxCycles)
 
-        for _, proc := range e.Processes {
-            // Check if process can run (enough stock for needs)
-            canRun := true
-            for item, qty := range proc.Needs {
-                if e.Stock.Items[item] < qty {
-                    canRun = false
-                    break
-                }
-            }
-            if !canRun {
-                continue
-            }
+	type runningProcess struct {
+		Process *process.Process
+		Delay   int
+	}
 
-            // Deduct needs from stock
-            for item, qty := range proc.Needs {
-                e.Stock.Items[item] -= qty
-            }
+	var running []runningProcess
+	e.Schedule = []string{}
+	e.Cycle = 0
 
-            for item, qty := range proc.Result {
-                e.Stock.Items[item] += qty
-            }
+	for e.Cycle < maxCycles {
+		fmt.Printf("Cycle %d\n", e.Cycle)
 
-            // Log execution
-            fmt.Printf("Cycle %d: Executed process %s\n", e.Cycle, proc.Name)
-            executed = true
-        }
+		// Process completion step
+		var updatedRunning []runningProcess
+		for _, rp := range running {
+			rp.Delay--
+			if rp.Delay == 0 {
+				// Add result items to stock
+				for item, qty := range rp.Process.Result {
+					e.Stock.Items[item] += qty
+					fmt.Printf("  [+] %d %s (from %s)\n", qty, item, rp.Process.Name)
+				}
+			} else {
+				updatedRunning = append(updatedRunning, rp)
+			}
+		}
+		running = updatedRunning
 
-        e.Cycle++
+		// Try to schedule new processes
+		executed := false
+		for _, p := range e.Processes {
+			if p.CanRun(e.Stock.Items) {
+				// Deduct required resources
+				for item, qty := range p.Needs {
+					e.Stock.Items[item] -= qty
+					fmt.Printf("  [-] %d %s (used by %s)\n", qty, item, p.Name)
+				}
 
-        // Simulate waiting time between cycles
-        util.Wait(waitingTime)
+				// Start the process
+				running = append(running, runningProcess{
+					Process: p,
+					Delay:   p.Cycle,
+				})
+				e.Schedule = append(e.Schedule, p.Name)
+				fmt.Printf("  [*] Scheduled process: %s\n", p.Name)
+				executed = true
+			}
+		}
 
-        if !executed {
-            idleCycles++
-        } else {
-            idleCycles = 0
-        }
+		if !executed && len(running) == 0 {
+			fmt.Println("No more executable processes. Ending simulation.")
+			break
+		}
 
-        // Stop if no process was executed for maxIdleCycles
-        if idleCycles >= maxIdleCycles {
-            fmt.Println("No more executable processes or max idle cycles reached. Stopping simulation.")
-            break
-        }
-    }
+		e.Cycle++
+	}
+
+	fmt.Printf("Simulation ended after %d cycles\n", e.Cycle)
 }
+
