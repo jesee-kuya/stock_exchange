@@ -23,8 +23,15 @@ type ConfigData struct {
 	OptimizeTargets []string
 }
 
-// LoadConfig parses a configuration file and populates the Checker with
-// initial stocks, processes, and optimization goals.
+// ParseConfig reads a configuration file from the specified path and parses its contents
+// into a ConfigData struct. The configuration file is expected to define initial stock
+// quantities, process definitions, and optimization targets. Each line in the file is
+// interpreted based on its format:
+//   - Stock definitions: "name:quantity"
+//   - Process definitions: "name:(needs):(results):cycles"
+//   - Optimization targets: "optimize:(target1;target2;...)"
+// Lines that are empty or start with '#' are ignored as comments.
+// Returns a pointer to the populated ConfigData struct or an error if parsing fails.
 func ParseConfig(path string) (*ConfigData, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -62,7 +69,13 @@ func ParseConfig(path string) (*ConfigData, error) {
 	return config, nil
 }
 
-// parseLine parses a single line from the configuration file
+// parseLine analyzes a single line from the configuration file and updates the provided
+// ConfigData struct accordingly. It determines the type of configuration entry based on
+// the line's format and delegates parsing to the appropriate helper function:
+//   - Stock definitions (e.g., "name:quantity") are handled by parseStock.
+//   - Process definitions (e.g., "name:(needs):(results):cycles") are handled by parseProcess.
+//   - Optimization targets (e.g., "optimize:(target1;target2;...)") are handled by parseOptimize.
+// Returns an error if the line format is unrecognized or if parsing fails.
 func parseLine(config *ConfigData, line string) error {
 	// Check if it's a stock definition (name:quantity)
 	if !strings.Contains(line, "(") && strings.Contains(line, ":") && !strings.HasPrefix(line, "optimize:") {
