@@ -60,14 +60,26 @@ func (e *Engine) LoadConfig(path string) error {
 	return nil
 }
 
-// Run executes the main simulation loop of the Engine for a specified duration.
-// The waitingTime parameter is a string representing the maximum simulation time,
-// which is parsed into a number of cycles. In each cycle, the function processes
-// running processes, updates the stock with completed process results, and attempts
-// to schedule new processes if their resource requirements are met. The simulation
-// ends when the maximum number of cycles is reached or no more processes can be executed.
-// The function prints detailed information about each cycle, including resource usage,
-// process scheduling, and simulation status.
+// Run executes the simulation of process scheduling and execution over a specified duration.
+//
+// It simulates each cycle of the engine until either the specified maximum duration is reached
+// or no more processes can be executed.
+//
+// Parameters:
+//   - waitingTime: a string representing the maximum simulation time, which will be parsed into cycles.
+//
+// Behavior:
+//   - Parses the waitingTime into an integer number of cycles.
+//   - Initializes internal engine state: schedule list and cycle counter.
+//   - For each cycle:
+//       - Completes any running processes and updates the stock with their output.
+//       - Attempts to start new processes if their input needs can be fulfilled from the current stock.
+//       - Deducts used items from stock and schedules the process for execution based on its delay.
+//   - The simulation ends early if no process can be started and none are still running.
+//
+// Notes:
+//   - Each process has a defined delay (`Cycle`) representing how long it takes to complete.
+//   - Results and actions are printed to standard output at every step.
 func (e *Engine) Run(waitingTime string) {
 	maxCycles, err := util.ParseDuration(waitingTime)
 	if err != nil {
@@ -89,12 +101,10 @@ func (e *Engine) Run(waitingTime string) {
 	for e.Cycle < maxCycles {
 		fmt.Printf("Cycle %d\n", e.Cycle)
 
-		// Process completion step
 		var updatedRunning []runningProcess
 		for _, rp := range running {
 			rp.Delay--
 			if rp.Delay == 0 {
-				// Add result items to stock
 				for item, qty := range rp.Process.Result {
 					e.Stock.Items[item] += qty
 					fmt.Printf("  [+] %d %s (from %s)\n", qty, item, rp.Process.Name)
@@ -104,18 +114,13 @@ func (e *Engine) Run(waitingTime string) {
 			}
 		}
 		running = updatedRunning
-
-		// Try to schedule new processes
 		executed := false
 		for _, p := range e.Processes {
 			if p.CanRun(e.Stock.Items) {
-				// Deduct required resources
 				for item, qty := range p.Needs {
 					e.Stock.Items[item] -= qty
 					fmt.Printf("  [-] %d %s (used by %s)\n", qty, item, p.Name)
 				}
-
-				// Start the process
 				running = append(running, runningProcess{
 					Process: p,
 					Delay:   p.Cycle,
@@ -136,4 +141,5 @@ func (e *Engine) Run(waitingTime string) {
 
 	fmt.Printf("Simulation ended after %d cycles\n", e.Cycle)
 }
+
 
