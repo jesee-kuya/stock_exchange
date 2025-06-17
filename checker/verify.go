@@ -17,7 +17,7 @@ func (c *Checker) Verify() error {
 	currentCycle := 0
 
 	for _, entry := range c.Log {
-		fmt.Printf("Evaluating: %d:%s\n", entry.Cycle, entry.Name)
+		fmt.Printf("Evaluating: %d:%s\n", entry.Cycle, entry.ProcessName)
 
 		// Apply any pending outputs from prior cycles
 		for cycle := currentCycle; cycle <= entry.Cycle; cycle++ {
@@ -33,13 +33,13 @@ func (c *Checker) Verify() error {
 		// Find the process
 		var proc *process.Process
 		for _, p := range c.Processes {
-			if p.Name == entry.Name {
+			if p.Name == entry.ProcessName {
 				proc = p
 				break
 			}
 		}
 		if proc == nil {
-			return fmt.Errorf("unknown process '%s' at cycle %d", entry.Name, entry.Cycle)
+			return fmt.Errorf("unknown process '%s' at cycle %d", entry.ProcessName, entry.Cycle)
 		}
 
 		// Check if enough stock exists

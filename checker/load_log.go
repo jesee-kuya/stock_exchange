@@ -38,8 +38,8 @@ func (c *Checker) LoadLog(path string) error {
 		}
 
 		entry := engine.ScheduleEntry{
-			Cycle: cycle,
-			Name:  name,
+			Cycle:       cycle,
+			ProcessName: name,
 		}
 		c.Log = append(c.Log, entry)
 	}
