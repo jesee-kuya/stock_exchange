@@ -144,8 +144,8 @@ No more process doable at cycle 61
 ```
 
 ## Implementation Requirements
--  Golang
-- Cofigaration file
+- Golang
+- Configuration files
 
 ### Optimization Strategies
 - **Time Optimization**: Minimize total execution time
@@ -242,8 +242,8 @@ stock-scheduler/
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Contributers
-jesee-kuya/(https://github.com/jesee-kuya/)
-joseowino(https://github.com/joseowino)
-stkisengese(https://github.com/stkisengese)
-Baraq23(https://github.com/Baraq23)
+## Contributors
+- [jesee-kuya](https://github.com/jesee-kuya/)
+- [joseowino](https://github.com/joseowino)
+- [stkisengese](https://github.com/stkisengese)
+- [Baraq23](https://github.com/Baraq23)
