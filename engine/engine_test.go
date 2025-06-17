@@ -7,6 +7,11 @@ import (
 	"testing"
 )
 
+// TestSaveLog tests the SaveLog method of the Engine type.
+// It verifies the following scenarios:
+//   - The log file is created with the correct format and content.
+//   - An error is returned when an empty file path is provided.
+//   - The method handles a nil schedule gracefully by creating an empty file.
 func TestSaveLog(t *testing.T) {
 	t.Run("file format", func(t *testing.T) {
 		tempDir := t.TempDir()
