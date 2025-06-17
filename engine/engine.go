@@ -7,8 +7,15 @@ import (
 	"github.com/jesee-kuya/stock_exchange/util"
 )
 
-// Engine is the main structure for executing and optimizing
-// the scheduling process defined in a configuration file
+// Engine represents the core simulation engine for the stock exchange system.
+// It manages the available stock, the set of processes that can be executed,
+//
+// Fields:
+//   - Stock: Pointer to the Stock struct representing available items and their quantities.
+//   - Processes: Slice of pointers to Process structs, representing all possible processes.
+//   - Schedule: Slice of strings recording the names of scheduled processes in order of execution.
+//   - Cycle: Integer tracking the current simulation cycle.
+//   - OptimizeTargets: Slice of strings specifying the optimization targets for the simulation.
 type Engine struct {
 	Stock           *Stock
 	Processes       []*process.Process
@@ -17,16 +24,29 @@ type Engine struct {
 	OptimizeTargets []string
 }
 
-// Stock represents the available items and their quantities.
+
+// Stock represents the available items in the system.
+// The Items map stores item names as keys and their corresponding quantities as values.
 type Stock struct {
 	Items map[string]int
 }
 
+// ScheduleEntry represents a scheduled execution of a process.
+// It records the cycle at which the process is run and the name of the process.
 type ScheduleEntry struct {
-	Cycle       int
-	ProcessName string
+	Cycle       int    // The cycle number when the process is executed
+	ProcessName string // The name of the process being executed
 }
 
+// LoadConfig loads and parses a configuration file to initialize the Engine's state.
+//
+// It performs the following actions:
+// - Parses the configuration file at the given path.
+// - Initializes the Stock with item quantities from the config.
+// - Loads the list of processes from the config.
+// - Sets the optimization targets.
+//
+// Returns an error if parsing the configuration fails.
 func (e *Engine) LoadConfig(path string) error {
 	config, err := util.ParseConfig(path)
 	if err != nil {
@@ -39,8 +59,6 @@ func (e *Engine) LoadConfig(path string) error {
 
 	return nil
 }
-
-
 
 // Run executes the main simulation loop of the Engine for a specified duration.
 // The waitingTime parameter is a string representing the maximum simulation time,
