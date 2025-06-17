@@ -1,11 +1,17 @@
 package util
 
-import "time"
+import (
+	"fmt"
+	"strconv"
+)
 
-func Wait(duration string) {
-	d, err := time.ParseDuration(duration)
-	if err != nil {
-		return // Invalid duration, skip waiting
+// ParseDuration parses a string representing a number of cycles (e.g., "10")
+// and returns it as an integer. Returns an error if the input is invalid.
+func ParseDuration(input string) (int, error) {
+	cycles, err := strconv.Atoi(input)
+	if err != nil || cycles < 0 {
+		return 0, fmt.Errorf("invalid duration: %s", input)
 	}
-	time.Sleep(d)
+	return cycles, nil
 }
+
