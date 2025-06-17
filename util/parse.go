@@ -95,7 +95,6 @@ func parseLine(config *ConfigData, line string) error {
 	return fmt.Errorf("unrecognized line format: %s", line)
 }
 
-// / parseStock parses a stock line in format "name:quantity"
 func parseStock(config *ConfigData, line string) error {
 	parts := strings.Split(line, ":")
 	if len(parts) != 2 {
@@ -182,6 +181,15 @@ func parseProcess(config *ConfigData, line string) error {
 	return nil
 }
 
+// parseResourceMap parses a string representing a resource map in the format "(name1:qty1;name2:qty2;...)".
+// It returns a map where the keys are resource names and the values are their corresponding quantities.
+// The input string should be enclosed in parentheses, with each resource separated by a semicolon and
+// each resource specified as "name:quantity". If the input string is empty or contains no resources,
+// an empty map is returned. Returns an error if any resource entry is malformed or if a quantity cannot
+// be parsed as an integer.
+//
+// Example input: "(iron:2;coal:3)"
+// Example output: map[string]int{"iron": 2, "coal": 3}
 func parseResourceMap(blockStr string) (map[string]int, error) {
 	resources := make(map[string]int)
 	blockStr = strings.Trim(blockStr, "()")
