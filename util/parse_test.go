@@ -6,6 +6,9 @@ import (
 	"github.com/jesee-kuya/stock_exchange/process"
 )
 
+// TestParseLine tests the parseLine function with various input strings representing different configuration commands.
+// It verifies that parseLine correctly parses stock, optimize, and process commands without returning an error.
+// Each test case initializes a fresh ConfigData instance and checks that parsing the rawData string does not produce an error.
 func TestParseLine(t *testing.T) {
 	// configData := &ConfigData{}
 	testCases := []struct {
