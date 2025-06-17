@@ -9,7 +9,24 @@ import (
 	"github.com/jesee-kuya/stock_exchange/engine"
 )
 
-// LoadLog reads the log file and stores the sequence of executed processes as ScheduleEntry.
+// LoadLog reads a log file from the specified path and populates the Checker's Log field
+// with schedule entries. Each line in the log file is expected to be in the format:
+// "<cycle>:<process_name>", where <cycle> is an integer representing the cycle number
+// and <process_name> is a string representing the name of the process.
+//
+// Lines that do not match the expected format or contain invalid cycle numbers are skipped.
+//
+// Parameters:
+//   - path: The file path to the log file.
+//
+// Returns:
+//   - error: An error if the file cannot be opened or if there is an issue during scanning.
+//            Returns nil if the log is successfully loaded.
+//
+// Example log file format:
+//   1:ProcessA
+//   2:ProcessB
+//   3:ProcessC
 func (c *Checker) LoadLog(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
