@@ -16,7 +16,9 @@ type runningProcess struct {
 func (e *Engine) Run(waitingTime string) {
 	maxSeconds, err := util.ParseDuration(waitingTime)
 	if err != nil {
-		fmt.Printf("Invalid waiting time: %v\n", err)
+		strParseError := fmt.Sprintf("Invalid waiting time format: %v", err)
+		e.Schedule = append(e.Schedule, strParseError)
+		fmt.Println(strParseError)
 		return
 	}
 
@@ -61,6 +63,7 @@ func (e *Engine) Run(waitingTime string) {
 
 	printStock(e.Stock)
 }
+
 
 func updatedRunningProcesses(running []runningProcess, e Engine) []runningProcess {
 	var updated []runningProcess
