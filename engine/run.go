@@ -30,7 +30,9 @@ func (e *Engine) Run(waitingTime string) {
 
 	for {
 		if time.Since(startTime).Seconds() >= float64(maxSeconds) {
-			fmt.Printf("Time limit exceeded after %d cycles\n", e.Cycle)
+			strTimeFailed := fmt.Sprintf("Time limit exceeded after %d cycles", e.Cycle)
+			e.Schedule = append(e.Schedule, strTimeFailed)
+			fmt.Println(strTimeFailed)
 			break
 		}
 
