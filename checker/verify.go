@@ -6,6 +6,13 @@ import (
 	"github.com/jesee-kuya/stock_exchange/process"
 )
 
+// Verify checks the validity of the process execution log against the initial stock levels and process definitions.
+// It simulates the consumption and production of items by processes over cycles, ensuring that:
+//   - Each process in the log exists in the list of known processes.
+//   - Sufficient stock is available for each process's needs at the time it is executed.
+//   - Outputs from processes are applied after the required number of cycles.
+// If any inconsistency is found (such as an unknown process or insufficient stock), an error is returned
+// describing the issue and the cycle at which it occurred. If the log is valid, it returns nil.
 func (c *Checker) Verify() error {
 	stocks := make(map[string]int)
 	for k, v := range c.Stocks {

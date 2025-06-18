@@ -10,15 +10,28 @@ import (
 	"github.com/jesee-kuya/stock_exchange/process"
 )
 
-// ConfigData represents the parsed configuration data
+// ConfigData holds the parsed configuration data for the stock exchange system.
+// It includes the initial stock quantities, the list of processes, and the optimization targets.
+//
+// Fields:
+//   - Stocks: a map where the key is the stock name and the value is the initial quantity.
+//   - Processes: a slice of pointers to Process structs, each representing a process definition.
+//   - OptimizeTargets: a slice of strings specifying the optimization goals extracted from the config file.
 type ConfigData struct {
 	Stocks          map[string]int
 	Processes       []*process.Process
 	OptimizeTargets []string
 }
 
-// LoadConfig parses a configuration file and populates the Checker with
-// initial stocks, processes, and optimization goals.
+// ParseConfig reads a configuration file from the specified path and parses its contents
+// into a ConfigData struct. The configuration file is expected to define initial stock
+// quantities, process definitions, and optimization targets. Each line in the file is
+// interpreted based on its format:
+//   - Stock definitions: "name:quantity"
+//   - Process definitions: "name:(needs):(results):cycles"
+//   - Optimization targets: "optimize:(target1;target2;...)"
+// Lines that are empty or start with '#' are ignored as comments.
+// Returns a pointer to the populated ConfigData struct or an error if parsing fails.
 func ParseConfig(path string) (*ConfigData, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -56,7 +69,13 @@ func ParseConfig(path string) (*ConfigData, error) {
 	return config, nil
 }
 
-// parseLine parses a single line from the configuration file
+// parseLine analyzes a single line from the configuration file and updates the provided
+// ConfigData struct accordingly. It determines the type of configuration entry based on
+// the line's format and delegates parsing to the appropriate helper function:
+//   - Stock definitions (e.g., "name:quantity") are handled by parseStock.
+//   - Process definitions (e.g., "name:(needs):(results):cycles") are handled by parseProcess.
+//   - Optimization targets (e.g., "optimize:(target1;target2;...)") are handled by parseOptimize.
+// Returns an error if the line format is unrecognized or if parsing fails.
 func parseLine(config *ConfigData, line string) error {
 	// Check if it's a stock definition (name:quantity)
 	if !strings.Contains(line, "(") && strings.Contains(line, ":") && !strings.HasPrefix(line, "optimize:") {
@@ -76,7 +95,18 @@ func parseLine(config *ConfigData, line string) error {
 	return fmt.Errorf("unrecognized line format: %s", line)
 }
 
-// / parseStock parses a stock line in format "name:quantity"
+// parseStock parses a single line of stock data and updates the provided ConfigData.
+//
+// The expected format for the line is: "item_name:quantity" (e.g., "euro:10").
+// It splits the line at the colon, trims whitespace, and converts the quantity to an integer.
+// If parsing succeeds, the item and its quantity are added to the config's Stocks map.
+//
+// Parameters:
+//   - config: a pointer to the ConfigData struct to be updated.
+//   - line: a string representing one line of stock information.
+//
+// Returns:
+//   - An error if the line format is invalid or the quantity is not a valid integer.
 func parseStock(config *ConfigData, line string) error {
 	parts := strings.Split(line, ":")
 	if len(parts) != 2 {
@@ -95,7 +125,23 @@ func parseStock(config *ConfigData, line string) error {
 	return nil
 }
 
-// parseOptimize parses the optimize line and extracts target list
+// parseOptimize parses an optimization target line and updates the provided ConfigData.
+//
+// The expected format for the line is: "optimize:(target1;target2;...;targetN)".
+// For example: "optimize:(euro;material;energy)"
+//
+// Behavior:
+//   - Strips the "optimize:" prefix.
+//   - Removes surrounding parentheses.
+//   - Splits the remaining string by semicolons to extract individual optimization targets.
+//   - Appends non-empty trimmed targets to config.OptimizeTargets.
+//
+// Parameters:
+//   - config: a pointer to the ConfigData struct to be updated.
+//   - line: a string representing the line containing optimization targets.
+//
+// Returns:
+//   - An error (always nil in current implementation), allowing future extensibility for validation.
 func parseOptimize(config *ConfigData, line string) error {
 	// Remove "optimize:" prefix and parse the targets
 	targetsPart := strings.TrimPrefix(line, "optimize:")
@@ -117,7 +163,6 @@ func parseOptimize(config *ConfigData, line string) error {
 	return nil
 }
 
-// parseProcess parses a process line in format "name:(needs):(results):cycles"
 func parseProcess(config *ConfigData, line string) error {
 	// Find the first colon to separate name from the rest
 	colonIndex := strings.Index(line, ":")
@@ -163,7 +208,15 @@ func parseProcess(config *ConfigData, line string) error {
 	return nil
 }
 
-// parseResourceBlock parses a string like "(a:1;b:2)" into map[string]int
+// parseResourceMap parses a string representing a resource map in the format "(name1:qty1;name2:qty2;...)".
+// It returns a map where the keys are resource names and the values are their corresponding quantities.
+// The input string should be enclosed in parentheses, with each resource separated by a semicolon and
+// each resource specified as "name:quantity". If the input string is empty or contains no resources,
+// an empty map is returned. Returns an error if any resource entry is malformed or if a quantity cannot
+// be parsed as an integer.
+//
+// Example input: "(iron:2;coal:3)"
+// Example output: map[string]int{"iron": 2, "coal": 3}
 func parseResourceMap(blockStr string) (map[string]int, error) {
 	resources := make(map[string]int)
 	blockStr = strings.Trim(blockStr, "()")
@@ -171,7 +224,6 @@ func parseResourceMap(blockStr string) (map[string]int, error) {
 		return resources, nil
 	}
 
-	// Split by semicolon to get individual resource:quantity pairs
 	items := strings.Split(blockStr, ";")
 	for _, item := range items {
 		item = strings.TrimSpace(item)
@@ -179,7 +231,6 @@ func parseResourceMap(blockStr string) (map[string]int, error) {
 			continue
 		}
 
-		// Split by colon to get resource name and quantity
 		parts := strings.Split(item, ":")
 		if len(parts) != 2 {
 			return nil, fmt.Errorf("invalid resource format: %s", item)
