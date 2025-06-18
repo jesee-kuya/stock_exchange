@@ -108,7 +108,7 @@ func (e *Engine) Run(waitingTime string) {
 		}
 
 		if len(running) == 0 && !e.canRunAny() {
-			fmt.Printf("No more process doable at cycle %d\n", e.Cycle)
+			fmt.Printf("No more process doable at cycle %d\n", e.Cycle + 1)
 			break
 		}
 
