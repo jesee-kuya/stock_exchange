@@ -52,7 +52,7 @@ func (e *Engine) Run(waitingTime string) {
 				}
 			}
 			if !canStartAny {
-				strProcessFound := fmt.Sprintf("No more process doable at cycle %d", e.Cycle + 1)
+				strProcessFound := fmt.Sprintf("No more process doable at cycle %d", e.Cycle+1)
 				e.Schedule = append(e.Schedule, strProcessFound)
 				fmt.Println(strProcessFound)
 				break
