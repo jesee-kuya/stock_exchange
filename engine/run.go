@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/jesee-kuya/stock_exchange/process"
@@ -16,47 +17,39 @@ type runningProcess struct {
 func (e *Engine) Run(waitingTime string) {
 	maxSeconds, err := util.ParseDuration(waitingTime)
 	if err != nil {
-		strParseError := fmt.Sprintf("Invalid waiting time format: %v", err)
-		e.Schedule = append(e.Schedule, strParseError)
-		fmt.Println(strParseError)
+		fmt.Println("Invalid waiting time format:", err)
 		return
 	}
 
-	startTime := time.Now()
-
-	fmt.Printf("Main Processes:\n")
-
-	running := []runningProcess{}
+	start := time.Now()
 	e.Schedule = []string{}
 	e.Cycle = 0
+	running := []runningProcess{}
+
+	fmt.Println("Main Processes :")
+
+	targets := map[string]bool{}
+	for _, t := range e.OptimizeTargets {
+		targets[t] = true
+	}
+	priorities := computePriorities(e.Processes, targets)
 
 	for {
-		if time.Since(startTime).Seconds() >= float64(maxSeconds) {
-			strTimeFailed := fmt.Sprintf("Time limit exceeded after %d cycles", e.Cycle)
-			e.Schedule = append(e.Schedule, strTimeFailed)
-			fmt.Println(strTimeFailed)
+		if time.Since(start).Seconds() >= float64(maxSeconds) {
+			fmt.Printf("Time limit exceeded after %d cycles\n", e.Cycle)
 			break
 		}
 
-		// Pass engine by reference to update stock
-		running = updatedRunningProcesses(running, e)
-		newSchedule := scheduler(&running, e)
-		e.Schedule = append(e.Schedule, newSchedule...)
+		running = updateRunningProcesses(running, e)
 
-		if len(running) == 0 {
-			canStartAny := false
-			for _, p := range e.Processes {
-				if p.CanRun(e.Stock.Items) {
-					canStartAny = true
-					break
-				}
-			}
-			if !canStartAny {
-				strProcessFound := fmt.Sprintf("No more process doable at cycle %d", e.Cycle+1)
-				e.Schedule = append(e.Schedule, strProcessFound)
-				fmt.Println(strProcessFound)
-				break
-			}
+		if entry := scheduleOneProcess(&running, e, priorities); entry != "" {
+			e.Schedule = append(e.Schedule, entry)
+			fmt.Println(entry)
+		}
+
+		if len(running) == 0 && !e.canRunAny() {
+			fmt.Printf("No more process doable at cycle %d\n", e.Cycle)
+			break
 		}
 
 		e.Cycle++
@@ -65,53 +58,19 @@ func (e *Engine) Run(waitingTime string) {
 	printStock(e.Stock)
 }
 
-func updatedRunningProcesses(running []runningProcess, e *Engine) []runningProcess {
-	var updated []runningProcess
+func updateRunningProcesses(running []runningProcess, e *Engine) []runningProcess {
+	next := []runningProcess{}
 	for _, rp := range running {
 		rp.Delay--
-		if rp.Delay == 0 {
-			// Update the engine's stock directly
+		if rp.Delay <= 0 {
 			for item, qty := range rp.Process.Result {
 				e.Stock.Items[item] += qty
 			}
 		} else {
-			updated = append(updated, rp)
+			next = append(next, rp)
 		}
 	}
-	return updated
+	return next
 }
 
-func scheduler(running *[]runningProcess, e *Engine) []string {
-	schedule := []string{}
-	newProcessesScheduled := true
 
-	for newProcessesScheduled {
-		newProcessesScheduled = false
-		for _, p := range e.Processes {
-			if p.CanRun(e.Stock.Items) {
-				// Update the engine's stock directly
-				for item, qty := range p.Needs {
-					e.Stock.Items[item] -= qty
-				}
-
-				*running = append(*running, runningProcess{
-					Process: p,
-					Delay:   p.Cycle,
-				})
-				procesDescr := fmt.Sprintf(" %d:%s", e.Cycle, p.Name)
-				schedule = append(schedule, procesDescr)
-				fmt.Println(procesDescr)
-				newProcessesScheduled = true
-			}
-		}
-	}
-
-	return schedule
-}
-
-func printStock(stock *Stock) {
-	fmt.Println("Stock:")
-	for item, qty := range stock.Items {
-		fmt.Printf(" %s => %d\n", item, qty)
-	}
-}
