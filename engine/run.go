@@ -73,4 +73,37 @@ func updateRunningProcesses(running []runningProcess, e *Engine) []runningProces
 	return next
 }
 
+func scheduleOneProcess(running *[]runningProcess, e *Engine, priorities map[string]int) string {
+	runnable := []*process.Process{}
+	runningNames := map[string]bool{}
+	for _, rp := range *running {
+		runningNames[rp.Process.Name] = true
+	}
+
+	for _, p := range e.Processes {
+		if p.CanRun(e.Stock.Items) && !runningNames[p.Name] {
+			runnable = append(runnable, p)
+		}
+	}
+
+	if len(runnable) == 0 {
+		return ""
+	}
+
+	sort.Slice(runnable, func(i, j int) bool {
+		pi, pj := priorities[runnable[i].Name], priorities[runnable[j].Name]
+		if pi == pj {
+			return runnable[i].Name < runnable[j].Name
+		}
+		return pi > pj
+	})
+
+	selected := runnable[0]
+	for item, qty := range selected.Needs {
+		e.Stock.Items[item] -= qty
+	}
+	*running = append(*running, runningProcess{selected, selected.Cycle})
+	return fmt.Sprintf(" %d:%s", e.Cycle, selected.Name)
+}
+
 
