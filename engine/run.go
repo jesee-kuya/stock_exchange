@@ -35,7 +35,7 @@ func (e *Engine) Run(waitingTime string) {
 		}
 
 		running = updatedRunningProcesses(running, *e)
-		scheduler(&running, *e)
+		e.Schedule = append(e.Schedule, scheduler(&running, *e)...)
 
 		if len(running) == 0 {
 
@@ -47,7 +47,9 @@ func (e *Engine) Run(waitingTime string) {
 				}
 			}
 			if !canStartAny {
-				fmt.Printf("No more process doable at cycle %d\n", e.Cycle)
+				strProcessFound := fmt.Sprintf("No more process doable at cycle %d", e.Cycle)
+				e.Schedule = append(e.Schedule, strProcessFound)
+				fmt.Println(strProcessFound)
 				break
 			}
 		}
@@ -73,8 +75,10 @@ func updatedRunningProcesses(running []runningProcess, e Engine) []runningProces
 	return updated
 }
 
-func scheduler(running *[]runningProcess, e Engine) {
+func scheduler(running *[]runningProcess, e Engine) []string {
+	schedule := []string{}
 	newProcessesScheduled := true
+
 	for newProcessesScheduled {
 		newProcessesScheduled = false
 		for _, p := range e.Processes {
@@ -88,12 +92,15 @@ func scheduler(running *[]runningProcess, e Engine) {
 					Process: p,
 					Delay:   p.Cycle,
 				})
-				e.Schedule = append(e.Schedule, p.Name)
-				fmt.Printf(" %d:%s\n", e.Cycle, p.Name)
+				procesDescr := fmt.Sprintf(" %d:%s", e.Cycle, p.Name)
+				schedule = append(schedule, procesDescr)
+				fmt.Println(procesDescr)
 				newProcessesScheduled = true
 			}
 		}
 	}
+
+	return schedule
 }
 
 func printStock(stock *Stock) {
