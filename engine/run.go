@@ -35,27 +35,7 @@ func (e *Engine) Run(waitingTime string) {
 		}
 
 		running = updatedRunningProcesses(running, *e)
-
-		newProcessesScheduled := true
-		for newProcessesScheduled {
-			newProcessesScheduled = false
-			for _, p := range e.Processes {
-				if p.CanRun(e.Stock.Items) {
-
-					for item, qty := range p.Needs {
-						e.Stock.Items[item] -= qty
-					}
-
-					running = append(running, runningProcess{
-						Process: p,
-						Delay:   p.Cycle,
-					})
-					e.Schedule = append(e.Schedule, p.Name)
-					fmt.Printf(" %d:%s\n", e.Cycle, p.Name)
-					newProcessesScheduled = true
-				}
-			}
-		}
+		scheduler(&running, *e)
 
 		if len(running) == 0 {
 
@@ -91,6 +71,29 @@ func updatedRunningProcesses(running []runningProcess, e Engine) []runningProces
 		}
 	}
 	return updated
+}
+
+func scheduler(running *[]runningProcess, e Engine) {
+	newProcessesScheduled := true
+	for newProcessesScheduled {
+		newProcessesScheduled = false
+		for _, p := range e.Processes {
+			if p.CanRun(e.Stock.Items) {
+
+				for item, qty := range p.Needs {
+					e.Stock.Items[item] -= qty
+				}
+
+				*running = append(*running, runningProcess{
+					Process: p,
+					Delay:   p.Cycle,
+				})
+				e.Schedule = append(e.Schedule, p.Name)
+				fmt.Printf(" %d:%s\n", e.Cycle, p.Name)
+				newProcessesScheduled = true
+			}
+		}
+	}
 }
 
 func printStock(stock *Stock) {
