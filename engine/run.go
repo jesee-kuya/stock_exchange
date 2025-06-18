@@ -106,4 +106,13 @@ func scheduleOneProcess(running *[]runningProcess, e *Engine, priorities map[str
 	return fmt.Sprintf(" %d:%s", e.Cycle, selected.Name)
 }
 
+func (e *Engine) canRunAny() bool {
+	for _, p := range e.Processes {
+		if p.CanRun(e.Stock.Items) {
+			return true
+		}
+	}
+	return false
+}
+
 
