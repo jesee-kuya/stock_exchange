@@ -38,11 +38,12 @@ func (e *Engine) Run(waitingTime string) {
 			break
 		}
 
-		running = updatedRunningProcesses(running, *e)
-		e.Schedule = append(e.Schedule, scheduler(&running, *e)...)
+		// Pass engine by reference to update stock
+		running = updatedRunningProcesses(running, e)
+		newSchedule := scheduler(&running, e)
+		e.Schedule = append(e.Schedule, newSchedule...)
 
 		if len(running) == 0 {
-
 			canStartAny := false
 			for _, p := range e.Processes {
 				if p.CanRun(e.Stock.Items) {
@@ -64,12 +65,12 @@ func (e *Engine) Run(waitingTime string) {
 	printStock(e.Stock)
 }
 
-
-func updatedRunningProcesses(running []runningProcess, e Engine) []runningProcess {
+func updatedRunningProcesses(running []runningProcess, e *Engine) []runningProcess {
 	var updated []runningProcess
 	for _, rp := range running {
 		rp.Delay--
 		if rp.Delay == 0 {
+			// Update the engine's stock directly
 			for item, qty := range rp.Process.Result {
 				e.Stock.Items[item] += qty
 			}
@@ -80,7 +81,7 @@ func updatedRunningProcesses(running []runningProcess, e Engine) []runningProces
 	return updated
 }
 
-func scheduler(running *[]runningProcess, e Engine) []string {
+func scheduler(running *[]runningProcess, e *Engine) []string {
 	schedule := []string{}
 	newProcessesScheduled := true
 
@@ -88,7 +89,7 @@ func scheduler(running *[]runningProcess, e Engine) []string {
 		newProcessesScheduled = false
 		for _, p := range e.Processes {
 			if p.CanRun(e.Stock.Items) {
-
+				// Update the engine's stock directly
 				for item, qty := range p.Needs {
 					e.Stock.Items[item] -= qty
 				}
