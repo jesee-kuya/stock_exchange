@@ -8,6 +8,11 @@ import (
 	"github.com/jesee-kuya/stock_exchange/util"
 )
 
+type runningProcess struct {
+	Process *process.Process
+	Delay   int
+}
+
 func (e *Engine) Run(waitingTime string) {
 	maxSeconds, err := util.ParseDuration(waitingTime)
 	if err != nil {
@@ -19,12 +24,7 @@ func (e *Engine) Run(waitingTime string) {
 
 	fmt.Printf("Main Processes:\n")
 
-	type runningProcess struct {
-		Process *process.Process
-		Delay   int
-	}
-
-	var running []runningProcess
+	running := []runningProcess{}
 	e.Schedule = []string{}
 	e.Cycle = 0
 
@@ -34,18 +34,7 @@ func (e *Engine) Run(waitingTime string) {
 			break
 		}
 
-		var updatedRunning []runningProcess
-		for _, rp := range running {
-			rp.Delay--
-			if rp.Delay == 0 {
-				for item, qty := range rp.Process.Result {
-					e.Stock.Items[item] += qty
-				}
-			} else {
-				updatedRunning = append(updatedRunning, rp)
-			}
-		}
-		running = updatedRunning
+		running = updatedRunningProcesses(running, *e)
 
 		newProcessesScheduled := true
 		for newProcessesScheduled {
@@ -87,6 +76,21 @@ func (e *Engine) Run(waitingTime string) {
 	}
 
 	printStock(e.Stock)
+}
+
+func updatedRunningProcesses(running []runningProcess, e Engine) []runningProcess {
+	var updated []runningProcess
+	for _, rp := range running {
+		rp.Delay--
+		if rp.Delay == 0 {
+			for item, qty := range rp.Process.Result {
+				e.Stock.Items[item] += qty
+			}
+		} else {
+			updated = append(updated, rp)
+		}
+	}
+	return updated
 }
 
 func printStock(stock *Stock) {
