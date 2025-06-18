@@ -92,9 +92,12 @@ func (e *Engine) Run(waitingTime string) {
 		e.Cycle++
 	}
 
-	// Print final stock
+	printStock(e.Stock)
+}
+
+func printStock(stock *Stock) {
 	fmt.Println("Stock:")
-	for item, qty := range e.Stock.Items {
+	for item, qty := range stock.Items {
 		fmt.Printf(" %s => %d\n", item, qty)
 	}
 }
