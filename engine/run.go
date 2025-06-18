@@ -22,29 +22,30 @@ func (e *Engine) Run(waitingTime string) {
 		return
 	}
 
-	fmt.Printf("Main Processes:\n")
-
 	type runningProcess struct {
 		Process *process.Process
 		Delay   int
 	}
 
+	type scheduledProcess struct {
+		Cycle int
+		Name  string
+	}
+
 	var running []runningProcess
+	var started []scheduledProcess
+
 	e.Schedule = []string{}
 	e.Cycle = 0
 
 	for e.Cycle < maxCycles {
-		fmt.Printf("Cycle %d\n", e.Cycle)
-
-		// Process completion step
+		// Finish any running process
 		var updatedRunning []runningProcess
 		for _, rp := range running {
 			rp.Delay--
 			if rp.Delay == 0 {
-				// Add result items to stock
 				for item, qty := range rp.Process.Result {
 					e.Stock.Items[item] += qty
-					fmt.Printf("  [+] %d %s (from %s)\n", qty, item, rp.Process.Name)
 				}
 			} else {
 				updatedRunning = append(updatedRunning, rp)
@@ -56,31 +57,42 @@ func (e *Engine) Run(waitingTime string) {
 		executed := false
 		for _, p := range e.Processes {
 			if p.CanRun(e.Stock.Items) {
-				// Deduct required resources
 				for item, qty := range p.Needs {
 					e.Stock.Items[item] -= qty
-					fmt.Printf("  [-] %d %s (used by %s)\n", qty, item, p.Name)
 				}
 
-				// Start the process
 				running = append(running, runningProcess{
 					Process: p,
 					Delay:   p.Cycle,
 				})
+
+				started = append(started, scheduledProcess{
+					Cycle: e.Cycle,
+					Name:  p.Name,
+				})
+
 				e.Schedule = append(e.Schedule, p.Name)
-				fmt.Printf("  [*] Scheduled process: %s\n", p.Name)
 				executed = true
 			}
 		}
 
 		if !executed && len(running) == 0 {
-			fmt.Println("No more executable processes. Ending simulation.")
 			break
 		}
 
 		e.Cycle++
 	}
 
-	fmt.Printf("Simulation ended after %d cycles\n", e.Cycle)
-}
+	// Output in expected format
+	fmt.Println("Main Processes:")
+	for _, s := range started {
+		fmt.Printf(" %d:%s\n", s.Cycle, s.Name)
+	}
 
+	fmt.Printf("No more process doable at cycle %d\n", e.Cycle)
+
+	fmt.Println("Stock:")
+	for item, qty := range e.Stock.Items {
+		fmt.Printf(" %s => %d\n", item, qty)
+	}
+}
