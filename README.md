@@ -2,84 +2,180 @@
 
 A process chain optimization program that maximizes performance while minimizing delays. This project implements a scheduling system that analyzes task dependencies and resource constraints to find optimal execution sequences.
 
-## Overview
+## Project Overview
 
-The Stock Exchange Simulator reads process definitions from configuration files, analyzes dependencies and resource requirements, then generates optimized execution schedules. The system includes both a main simulator and a checker program to validate generated schedules.
+The Stock Exchange Simulator is designed to solve resource allocation and scheduling problems by optimizing process execution order. The system reads configuration files that define available resources (stocks) and processes that consume and produce these resources, then generates an optimized execution schedule.
 
-## Features
-
+### Key Capabilities
 - **Process Chain Optimization**: Analyzes task dependencies and resource constraints
-- **Flexible Scheduling**: Supports both serial and parallel schedule generation schemes
+- **Multiple Scheduling Schemes**: Supports both serial and parallel execution strategies
 - **Resource Management**: Tracks stock levels and prevents resource conflicts
-- **Multiple Optimization Targets**: Can optimize for time, specific products, or combinations
-- **Schedule Validation**: Includes checker program to verify generated schedules
-- **Configurable Timeout**: Prevents infinite loops with user-defined time limits
+- **Flexible Optimization**: Can optimize for time, specific products, or combinations
+- **Schedule Validation**: Includes verification system to ensure generated schedules are valid
 
-## Architecture
+### Use Cases
+- Manufacturing process optimization
+- Project task scheduling with resource constraints
+- Supply chain management
+- Any scenario with interdependent tasks and limited resources
 
-### Main Components
+## Building and Running
 
-1. **Stock Exchange Program**: Generates optimized schedules from configuration files
-2. **Checker Program**: Validates generated schedules for correctness
-3. **Configuration Parser**: Reads and validates process definitions
-4. **Scheduler Engine**: Implements optimization algorithms
-5. **Resource Tracker**: Manages stock levels throughout execution
+### Prerequisites
+- Go 1.19 or higher
+- Git (for cloning the repository)
 
-### Scheduling Schemes
+### Building the Project
 
-- **Serial Schedule Generation**: Selects activities sequentially and schedules them as-soon-as-possible
-- **Parallel Schedule Generation**: Schedules multiple activities simultaneously when resources allow
+Clone the repository and build both programs:
 
-## File Format
+```bash
+git clone <repository_url>
+cd stock-scheduler
 
-### Configuration File Structure
+# Build the main scheduler
+go build -o stock_exchange .
 
-```
-# Comments start with #
-
-# Initial stock definitions
-<stock_name>:<quantity>
-
-# Process definitions
-<process_name>:(<input_stock>:<quantity>;...):(output_stock>:<quantity>;...):<cycle_duration>
-
-# Optimization targets
-optimize:(<target_stock>|time)
+# Build the checker
+go build -o checker ./checker
 ```
 
-### Example Configuration
+### Running the Scheduler
 
-```
-# Cabinet building example
-board:7
-
-do_doorknobs:(board:1):(doorknobs:1):15
-do_background:(board:2):(background:1):20
-do_shelf:(board:1):(shelf:1):10
-do_cabinet:(doorknobs:2;background:1;shelf:3):(cabinet:1):30
-
-optimize:(time;cabinet)
-```
-
-## Usage
-
-### Running the Stock Exchange Simulator
+Execute the scheduler with a configuration file and timeout:
 
 ```bash
 ./stock_exchange <config_file> <timeout_seconds>
 ```
 
 **Parameters:**
-- `config_file`: Path to the configuration file defining processes and stocks
+- `config_file`: Path to configuration file defining processes and stocks
 - `timeout_seconds`: Maximum execution time to prevent infinite loops
 
 **Example:**
 ```bash
-go run . examples/simple 10
+./stock_exchange examples/cabinet_build.txt 30
 ```
 
-**Output:**
+### Running the Checker
+
+Validate a generated schedule against the original configuration:
+
+```bash
+./checker <config_file> <log_file>
 ```
+
+**Parameters:**
+- `config_file`: Original configuration file
+- `log_file`: Generated schedule log to validate
+
+**Example:**
+```bash
+./checker examples/cabinet_build.txt examples/cabinet_build.log
+```
+
+### Running Both Programs Together
+
+For a complete workflow, run the scheduler followed by the checker:
+
+```bash
+# Run scheduler and generate log
+./stock_exchange examples/cabinet_build.txt 30
+
+# Validate the generated schedule
+./checker examples/cabinet_build.txt examples/cabinet_build.log
+```
+
+You can also chain them in a single command:
+
+```bash
+./stock_exchange examples/cabinet_build.txt 30 && ./checker examples/cabinet_build.txt examples/cabinet_build.log
+```
+
+## File Formats
+
+### Configuration File Format
+
+Configuration files define the initial state and processes using this syntax:
+
+```
+# Comments start with hash symbol
+
+# Initial stock definitions
+<stock_name>:<quantity>
+
+# Process definitions  
+<process_name>:(<input_stock>:<quantity>;...):(output_stock>:<quantity>;...):<cycle_duration>
+
+# Optimization targets
+optimize:(<target_stock>|time)
+```
+
+#### Configuration Example
+
+```
+# Cabinet manufacturing example
+board:7
+
+# Process definitions
+do_doorknobs:(board:1):(doorknobs:1):15
+do_background:(board:2):(background:1):20
+do_shelf:(board:1):(shelf:1):10
+do_cabinet:(doorknobs:2;background:1;shelf:3):(cabinet:1):30
+
+# Optimize for time and cabinet production
+optimize:(time;cabinet)
+```
+
+#### Configuration Rules
+- Comments begin with `#` and are ignored
+- Stock definitions must come before process definitions
+- Process inputs and outputs are separated by colons and semicolons
+- The optimize line specifies what to maximize (use `time` for time optimization)
+
+### Log File Format
+
+The scheduler generates log files with execution traces:
+
+```
+<cycle>:<process_name>
+<cycle>:<process_name>
+...
+No more process doable at cycle <final_cycle>
+```
+
+#### Log Example
+
+```
+0:do_shelf
+0:do_shelf  
+0:do_shelf
+0:do_doorknobs
+0:do_doorknobs
+0:do_background
+20:do_cabinet
+No more process doable at cycle 51
+```
+
+## Example Usage and Output
+
+### Complete Workflow Example
+
+**Configuration file** (`examples/simple.txt`):
+```
+# Simple production line
+euro:10
+
+buy_materiel:(euro:8):(material:1):10
+build_product:(material:1):(product:1):30
+delivery:(product:1):(client_content:1):20
+
+optimize:(time;client_content)
+```
+
+**Running the scheduler:**
+```bash
+$ ./stock_exchange examples/simple.txt 60
 Main Processes:
  0:buy_materiel
  10:build_product
@@ -93,49 +189,7 @@ Stock:
  client_content => 1
 ```
 
-### Running the Checker
-
-```bash
-./checker <config_file> <log_file>
-```
-
-**Parameters:**
-- `config_file`: Original configuration file
-- `log_file`: Generated schedule log to validate
-
-**Example:**
-```bash
-go run ./checker examples/simple examples/simple.log
-```
-
-**Output (Success):**
-```
-Evaluating: 0:buy_materiel
-Evaluating: 10:build_product
-Evaluating: 40:delivery
-Trace completed, no error detected.
-```
-
-**Output (Error):**
-```
-Evaluating: 0:buy_materiel
-Evaluating: 10:build_product
-Evaluating: 10:build_product
-Error detected
-at 10:build_product stock insufficient
-```
-
-## Log File Format
-
-The simulator generates log files with the following format:
-```
-<cycle>:<process_name>
-<cycle>:<process_name>
-...
-No more process doable at cycle <final_cycle>
-```
-
-Example:
+**Generated log file** (`examples/simple.log`):
 ```
 0:buy_materiel
 10:build_product
@@ -143,106 +197,129 @@ Example:
 No more process doable at cycle 61
 ```
 
-## Implementation Requirements
-- Golang
-- Configuration files
-
-### Optimization Strategies
-- **Time Optimization**: Minimize total execution time
-- **Product Optimization**: Maximize specific product output
-- **Combined Optimization**: Balance multiple objectives
-
-## Example Scenarios
-
-### Finite Process Chain
-Resources are consumed until no more processes can execute:
-```
-board:7
-do_shelf:(board:1):(shelf:1):10
-optimize:(time;shelf)
-```
-
-### Infinite Process Chain
-Self-sustaining processes that can run indefinitely:
-```
-money:100
-buy_materials:(money:50):(materials:10):5
-sell_products:(materials:5):(money:60):10
-optimize:(time;money)
-```
-
-## Error Handling
-
-The system handles various error conditions:
-- **Parse Errors**: Invalid configuration file syntax
-- **Resource Errors**: Insufficient stocks for process execution
-- **Dependency Errors**: Missing prerequisites for processes
-- **Timeout Errors**: Execution exceeds specified time limit
-
-## Building and Installation
-
+**Running the checker:**
 ```bash
-# Clone the repository
-git clone <repository_url>
-cd stock-exchange-sim
+$ ./checker examples/simple.txt examples/simple.log
+Evaluating: 0:buy_materiel
+Evaluating: 10:build_product
+Evaluating: 40:delivery
+Trace completed, no error detected.
+```
 
-# Build the main program
-go build -o stock_exchange .
+### Error Handling Example
 
-# Build the checker
-go build -o checker ./checker
+**Invalid log file:**
+```
+0:buy_materiel
+10:build_product
+10:build_product  # This creates an error - insufficient materials
+40:delivery
+```
 
-# Run tests
-go test ./...
+**Checker output:**
+```bash
+$ ./checker examples/simple.txt examples/simple_error.log
+Evaluating: 0:buy_materiel
+Evaluating: 10:build_product
+Evaluating: 10:build_product
+Error detected
+at 10:build_product stock insufficient
 ```
 
 ## Project Structure
 
 ```
 stock-scheduler/
-├── go.mod
-├── main.go                     # Entrypoint: decides whether to run scheduler or checker
-
-├── engine/                     # Scheduling logic
-│   ├── engine.go               # Engine struct definition
-│   ├── load_config.go          # func (e *Engine) LoadConfig(path string) error
-│   ├── run.go                  # func (e *Engine) Run(waitTime string)
-│   ├── save_log.go             # func (e *Engine) SaveLog(path string) error
-
-├── process/                    # Process logic
-│   ├── process.go              # Process struct definition
-│   ├── can_run.go              # func (p *Process) CanRun(stocks map[string]int) bool
-│   ├── run.go                  # func (p *Process) Run(stocks map[string]int)
-
-├── checker/                    # Checker program logic
-│   ├── checker.go              # Checker struct definition
-│   ├── new_checker.go          # func NewChecker() *Checker
-│   ├── load_config.go          # func (c *Checker) LoadConfig(path string) error
-│   ├── load_log.go             # func (c *Checker) LoadLog(path string) error
-│   ├── verify.go               # func (c *Checker) Verify() error
-
-├── examples/                   # Example config & log files
-│   ├── cabinet_build.txt       # Sample config file
-│   ├── cabinet_build.log       # Log file generated by scheduler
-
-├── util/                       # Utility helpers (optional)
-│   ├── parse.go                # Reusable parsing helpers
-│   ├── file.go                 # File I/O utilities
+├── go.mod                      # Go module definition
+├── main.go                     # Main entry point
+├── engine/                     # Scheduling engine
+│   ├── engine.go               # Core engine logic
+│   ├── load_config.go          # Configuration loading
+│   ├── run.go                  # Execution logic
+│   └── save_log.go             # Log file generation
+├── process/                    # Process management
+│   ├── process.go              # Process definitions
+│   ├── can_run.go              # Resource validation
+│   └── run.go                  # Process execution
+├── checker/                    # Validation system
+│   ├── checker.go              # Checker implementation
+│   ├── load_config.go          # Config loading for validation
+│   ├── load_log.go             # Log file parsing
+│   └── verify.go               # Schedule verification
+├── examples/                   # Sample configurations
+│   ├── cabinet_build.txt       # Cabinet manufacturing example
+│   ├── simple.txt              # Basic production line
+│   └── infinite.txt            # Self-sustaining processes
+└── README.md                   # This documentation
 ```
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Implement your changes
-4. Add tests for new functionality
-5. Submit a pull request
+We welcome contributions to improve the Stock Exchange Simulator! Please follow these guidelines to ensure smooth collaboration.
+
+### Collaboration Rules
+
+1. **Fork and Branch**: Create a fork of the repository and work on feature branches
+2. **Code Quality**: Ensure your code follows Go conventions and includes appropriate comments
+3. **Testing**: Add tests for new functionality and ensure existing tests pass
+4. **Documentation**: Update documentation for any user-facing changes
+5. **Small Commits**: Make focused commits that address single concerns
+6. **Pull Request Reviews**: All changes must be reviewed before merging
+
+### Commit Message Format
+
+Use the following prefixes for commit messages to maintain consistency:
+
+| Prefix      | Purpose                       | Example |
+| ----------- | ----------------------------- | ------- |
+| `feat:`     | New features or functionality | `feat: add parallel scheduling algorithm` |
+| `fix:`      | Bug fixes                     | `fix: resolve memory leak in process execution` |
+| `refactor:` | Code cleanup or restructuring | `refactor: simplify configuration parser` |
+| `docs:`     | Documentation updates         | `docs: update README with new examples` |
+| `test:`     | Adding or fixing tests        | `test: add unit tests for resource validation` |
+| `chore:`    | Miscellaneous changes         | `chore: update Go module dependencies` |
+
+### Development Workflow
+
+1. **Fork the repository** on GitHub
+2. **Clone your fork** locally:
+   ```bash
+   git clone https://github.com/yourusername/stock-scheduler.git
+   cd stock-scheduler
+   ```
+3. **Create a feature branch**:
+   ```bash
+   git checkout -b feat/your-feature-name
+   ```
+4. **Make your changes** and commit with proper format:
+   ```bash
+   git add .
+   git commit -m "feat: add your new feature description"
+   ```
+5. **Run tests** to ensure nothing is broken:
+   ```bash
+   go test ./...
+   ```
+6. **Push to your fork**:
+   ```bash
+   git push origin feat/your-feature-name
+   ```
+7. **Create a pull request** with a clear description of your changes
+
+### Code Style Guidelines
+
+- Follow standard Go formatting (`go fmt`)
+- Use meaningful variable and function names
+- Document public functions with comments starting with the function name
+- Keep functions focused and relatively small
+- Handle errors appropriately with clear error messages
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contributors
+
 - [jesee-kuya](https://github.com/jesee-kuya/)
 - [joseowino](https://github.com/joseowino)
 - [stkisengese](https://github.com/stkisengese)
