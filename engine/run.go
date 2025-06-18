@@ -42,8 +42,68 @@ func (e *Engine) Run(waitingTime string) {
 
 		running = updateRunningProcesses(running, e)
 
-		if entry := scheduleOneProcess(&running, e, priorities); entry != "" {
-			e.Schedule = append(e.Schedule, entry)
+		// Get all runnable processes for this cycle
+		runnable := []*process.Process{}
+		for _, p := range e.Processes {
+			if p.CanRun(e.Stock.Items) {
+				runnable = append(runnable, p)
+			}
+		}
+
+		// Sort by priority (descending) and then by name (descending)
+		sort.Slice(runnable, func(i, j int) bool {
+			pi, pj := priorities[runnable[i].Name], priorities[runnable[j].Name]
+			if pi == pj {
+				return runnable[i].Name > runnable[j].Name
+			}
+			return pi > pj
+		})
+
+		// Use a copy of stock for simulation
+		stockCopy := make(map[string]int)
+		for k, v := range e.Stock.Items {
+			stockCopy[k] = v
+		}
+
+		scheduledCount := make(map[*process.Process]int)
+		changed := true
+		for changed {
+			changed = false
+			for _, p := range runnable {
+				if p.CanRun(stockCopy) {
+					// Consume resources in the simulated stock
+					for item, qty := range p.Needs {
+						stockCopy[item] -= qty
+					}
+					scheduledCount[p]++
+					changed = true
+				}
+			}
+		}
+
+		// Schedule the processes and update real stock
+		scheduledEntries := []string{}
+		for _, p := range runnable {
+			count := scheduledCount[p]
+			for i := 0; i < count; i++ {
+				// Update real stock
+				for item, qty := range p.Needs {
+					e.Stock.Items[item] -= qty
+				}
+				// Add to running processes
+				running = append(running, runningProcess{
+					Process: p,
+					Delay:   p.Cycle,
+				})
+				// Create schedule entry
+				entry := fmt.Sprintf(" %d:%s", e.Cycle, p.Name)
+				scheduledEntries = append(scheduledEntries, entry)
+				e.Schedule = append(e.Schedule, entry)
+			}
+		}
+
+		// Print all entries for this cycle
+		for _, entry := range scheduledEntries {
 			fmt.Println(entry)
 		}
 
@@ -71,39 +131,6 @@ func updateRunningProcesses(running []runningProcess, e *Engine) []runningProces
 		}
 	}
 	return next
-}
-
-func scheduleOneProcess(running *[]runningProcess, e *Engine, priorities map[string]int) string {
-	runnable := []*process.Process{}
-	runningNames := map[string]bool{}
-	for _, rp := range *running {
-		runningNames[rp.Process.Name] = true
-	}
-
-	for _, p := range e.Processes {
-		if p.CanRun(e.Stock.Items) && !runningNames[p.Name] {
-			runnable = append(runnable, p)
-		}
-	}
-
-	if len(runnable) == 0 {
-		return ""
-	}
-
-	sort.Slice(runnable, func(i, j int) bool {
-		pi, pj := priorities[runnable[i].Name], priorities[runnable[j].Name]
-		if pi == pj {
-			return runnable[i].Name < runnable[j].Name
-		}
-		return pi > pj
-	})
-
-	selected := runnable[0]
-	for item, qty := range selected.Needs {
-		e.Stock.Items[item] -= qty
-	}
-	*running = append(*running, runningProcess{selected, selected.Cycle})
-	return fmt.Sprintf(" %d:%s", e.Cycle, selected.Name)
 }
 
 func (e *Engine) canRunAny() bool {
