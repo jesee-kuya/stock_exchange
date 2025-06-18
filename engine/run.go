@@ -115,4 +115,78 @@ func (e *Engine) canRunAny() bool {
 	return false
 }
 
+func computePriorities(processes []*process.Process, targets map[string]bool) map[string]int {
+	prio := map[string]int{}
+	visited := map[string]bool{}
+	queue := []struct {
+		Name  string
+		Depth int
+	}{}
 
+	for _, p := range processes {
+		for result := range p.Result {
+			if targets[result] {
+				prio[p.Name] = 0
+				queue = append(queue, struct {
+					Name  string
+					Depth int
+				}{p.Name, 0})
+			}
+		}
+	}
+
+	for len(queue) > 0 {
+		curr := queue[0]
+		queue = queue[1:]
+		visited[curr.Name] = true
+
+		var proc *process.Process
+		for _, p := range processes {
+			if p.Name == curr.Name {
+				proc = p
+				break
+			}
+		}
+
+		for need := range proc.Needs {
+			for _, p := range processes {
+				if _, ok := p.Result[need]; ok {
+					if prio[p.Name] < curr.Depth+1 {
+						prio[p.Name] = curr.Depth + 1
+						queue = append(queue, struct {
+							Name  string
+							Depth int
+						}{p.Name, curr.Depth + 1})
+					}
+				}
+			}
+		}
+	}
+
+	// Fallback for unreachable
+	max := 0
+	for _, v := range prio {
+		if v > max {
+			max = v
+		}
+	}
+	for _, p := range processes {
+		if _, ok := prio[p.Name]; !ok {
+			prio[p.Name] = max + 1
+		}
+	}
+
+	return prio
+}
+
+func printStock(stock *Stock) {
+	fmt.Println("Stock:")
+	keys := make([]string, 0, len(stock.Items))
+	for k := range stock.Items {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Printf(" %s => %d\n", k, stock.Items[k])
+	}
+}
