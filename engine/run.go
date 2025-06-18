@@ -29,18 +29,15 @@ func (e *Engine) Run(waitingTime string) {
 	e.Cycle = 0
 
 	for {
-		// Check if time limit exceeded
 		if time.Since(startTime).Seconds() >= float64(maxSeconds) {
 			fmt.Printf("Time limit exceeded after %d cycles\n", e.Cycle)
 			break
 		}
 
-		// Process completion step
 		var updatedRunning []runningProcess
 		for _, rp := range running {
 			rp.Delay--
 			if rp.Delay == 0 {
-				// Add result items to stock
 				for item, qty := range rp.Process.Result {
 					e.Stock.Items[item] += qty
 				}
@@ -50,18 +47,16 @@ func (e *Engine) Run(waitingTime string) {
 		}
 		running = updatedRunning
 
-		// Try to schedule ALL possible new processes (not just one)
 		newProcessesScheduled := true
 		for newProcessesScheduled {
 			newProcessesScheduled = false
 			for _, p := range e.Processes {
 				if p.CanRun(e.Stock.Items) {
-					// Deduct required resources
+
 					for item, qty := range p.Needs {
 						e.Stock.Items[item] -= qty
 					}
 
-					// Start the process
 					running = append(running, runningProcess{
 						Process: p,
 						Delay:   p.Cycle,
@@ -73,9 +68,8 @@ func (e *Engine) Run(waitingTime string) {
 			}
 		}
 
-		// Check if simulation should end
 		if len(running) == 0 {
-			// No processes running, check if any can be started
+
 			canStartAny := false
 			for _, p := range e.Processes {
 				if p.CanRun(e.Stock.Items) {
