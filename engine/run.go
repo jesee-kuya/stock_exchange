@@ -30,8 +30,11 @@ func (e *Engine) Run(waitingTime string) {
 
 	targets := map[string]bool{}
 	for _, t := range e.OptimizeTargets {
-		targets[t] = true
+		if _, ok := e.Stock.Items[t]; ok {
+			targets[t] = true
+		}
 	}
+
 	priorities := computePriorities(e.Processes, targets)
 
 	for {
