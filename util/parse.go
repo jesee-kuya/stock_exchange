@@ -177,6 +177,30 @@ func parseOptimize(config *ConfigData, line string) error {
 	return nil
 }
 
+// parseProcess parses a process definition line and updates the provided ConfigData.
+//
+// The expected format for the line is: "process_name:(needs):(results):cycles".
+// For example: "build_product:(material:1):(product:1):30"
+//
+// Components:
+//   - process_name: The unique identifier for the process.
+//   - (needs): A parentheses-enclosed list of required resources in format "resource:quantity;resource:quantity;...".
+//   - (results): A parentheses-enclosed list of produced resources in format "resource:quantity;resource:quantity;...".
+//   - cycles: An integer representing the number of cycles required to complete the process.
+//
+// Behavior:
+//   - Extracts the process name from the beginning of the line up to the first colon.
+//   - Splits the remainder into three parts: needs, results, and cycles.
+//   - Parses needs and results using parseResourceMap to convert them into resource maps.
+//   - Converts the cycles string to an integer.
+//   - Creates a new Process struct and appends it to config.Processes.
+//
+// Parameters:
+//   - config: a pointer to the ConfigData struct to be updated.
+//   - line: a string representing the process definition line.
+//
+// Returns:
+//   - An error if the line format is invalid, resource parsing fails, or cycles is not a valid integer.
 func parseProcess(config *ConfigData, line string) error {
 	// Find the first colon to separate name from the rest
 	colonIndex := strings.Index(line, ":")
