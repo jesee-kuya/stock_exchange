@@ -21,6 +21,11 @@ func (e *Engine) Run(waitingTime string) {
 		return
 	}
 
+	if !e.canRunAny() {
+		fmt.Println(" Missing processes\n Exiting... ")
+		return
+	}
+
 	start := time.Now()
 	e.Schedule = []string{}
 	e.Cycle = 0
