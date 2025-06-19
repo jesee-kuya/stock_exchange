@@ -30,6 +30,7 @@ type ConfigData struct {
 //   - Stock definitions: "name:quantity"
 //   - Process definitions: "name:(needs):(results):cycles"
 //   - Optimization targets: "optimize:(target1;target2;...)"
+//
 // Lines that are empty or start with '#' are ignored as comments.
 // Returns a pointer to the populated ConfigData struct or an error if parsing fails.
 func ParseConfig(path string) (*ConfigData, error) {
@@ -59,12 +60,12 @@ func ParseConfig(path string) (*ConfigData, error) {
 
 		// Parse the line based on its format
 		if err := parseLine(config, line); err != nil {
-			return nil, fmt.Errorf("error parsing line %d: %w", lineNumber, err)
+			return nil, fmt.Errorf(" Error while parsing: %w\nExiting... ", err)
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading config file: %w", err)
+		return nil, fmt.Errorf(" Error reading config file: %w\nExiting... ", err)
 	}
 	return config, nil
 }
@@ -75,6 +76,7 @@ func ParseConfig(path string) (*ConfigData, error) {
 //   - Stock definitions (e.g., "name:quantity") are handled by parseStock.
 //   - Process definitions (e.g., "name:(needs):(results):cycles") are handled by parseProcess.
 //   - Optimization targets (e.g., "optimize:(target1;target2;...)") are handled by parseOptimize.
+//
 // Returns an error if the line format is unrecognized or if parsing fails.
 func parseLine(config *ConfigData, line string) error {
 	// Check if it's a stock definition (name:quantity)
@@ -167,16 +169,19 @@ func parseProcess(config *ConfigData, line string) error {
 	// Find the first colon to separate name from the rest
 	colonIndex := strings.Index(line, ":")
 	if colonIndex == -1 {
-		return fmt.Errorf("invalid process format: %s", line)
+		return fmt.Errorf("%s", line)
 	}
 
 	name := strings.TrimSpace(line[:colonIndex])
+	if name == "" {
+		return fmt.Errorf("%s", line)
+	}
 	rest := line[colonIndex+1:]
 
 	// Parse the remaining parts: (needs):(results):cycles
 	parts := strings.Split(rest, "):")
 	if len(parts) != 3 {
-		return fmt.Errorf("invalid process format: %s", line)
+		return fmt.Errorf("%s", line)
 	}
 
 	// Parse needs
