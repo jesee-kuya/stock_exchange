@@ -17,10 +17,12 @@ import (
 //   - Stocks: a map where the key is the stock name and the value is the initial quantity.
 //   - Processes: a slice of pointers to Process structs, each representing a process definition.
 //   - OptimizeTargets: a slice of strings specifying the optimization goals extracted from the config file.
+//   - HasOptimizer: a boolean flag to track if an optimizer has already been defined.
 type ConfigData struct {
 	Stocks          map[string]int
 	Processes       []*process.Process
 	OptimizeTargets []string
+	HasOptimizer    bool
 }
 
 // ParseConfig reads a configuration file from the specified path and parses its contents
@@ -44,6 +46,7 @@ func ParseConfig(path string) (*ConfigData, error) {
 		Stocks:          make(map[string]int),
 		Processes:       make([]*process.Process, 0),
 		OptimizeTargets: make([]string, 0),
+		HasOptimizer:    false,
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -60,7 +63,7 @@ func ParseConfig(path string) (*ConfigData, error) {
 
 		// Parse the line based on its format
 		if err := parseLine(config, line); err != nil {
-			return nil, fmt.Errorf(" Error while parsing: %w\nExiting... ", err)
+			return nil, fmt.Errorf(" Error while parsing `%s`\nExiting... ", line)
 		}
 	}
 
@@ -133,18 +136,25 @@ func parseStock(config *ConfigData, line string) error {
 // For example: "optimize:(euro;material;energy)"
 //
 // Behavior:
+//   - Checks if an optimizer has already been defined (returns error if duplicate found).
 //   - Strips the "optimize:" prefix.
 //   - Removes surrounding parentheses.
 //   - Splits the remaining string by semicolons to extract individual optimization targets.
 //   - Appends non-empty trimmed targets to config.OptimizeTargets.
+//   - Sets HasOptimizer flag to true.
 //
 // Parameters:
 //   - config: a pointer to the ConfigData struct to be updated.
 //   - line: a string representing the line containing optimization targets.
 //
 // Returns:
-//   - An error (always nil in current implementation), allowing future extensibility for validation.
+//   - An error if a duplicate optimizer is detected, nil otherwise.
 func parseOptimize(config *ConfigData, line string) error {
+	// Check if optimizer has already been defined
+	if config.HasOptimizer {
+		return fmt.Errorf("multiple optimize declarations found")
+	}
+
 	// Remove "optimize:" prefix and parse the targets
 	targetsPart := strings.TrimPrefix(line, "optimize:")
 	targetsPart = strings.Trim(targetsPart, "()")
@@ -162,6 +172,8 @@ func parseOptimize(config *ConfigData, line string) error {
 		}
 	}
 
+	// Mark that we've processed an optimizer
+	config.HasOptimizer = true
 	return nil
 }
 
