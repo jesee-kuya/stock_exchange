@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -61,13 +60,13 @@ func main() {
 // engine is responsible for running the stock exchange engine in scheduling mode.
 // It expects exactly two command-line arguments: the configuration file path and the waiting time.
 // The function performs the following steps:
-//   1. Validates the number of arguments and prints usage instructions if incorrect.
-//   2. Loads the engine configuration from the specified file.
-//   3. Runs the engine with the provided waiting time.
-//   4. Saves the engine's log to a file with the same name as the configuration file, appended with ".log".
+//  1. Validates the number of arguments and prints usage instructions if incorrect.
+//  2. Loads the engine configuration from the specified file.
+//  3. Runs the engine with the provided waiting time.
+//  4. Saves the engine's log to a file with the same name as the configuration file, appended with ".log".
+//
 // If any step fails, the function logs the error and terminates the program.
 func engine() {
-	fmt.Println(len(os.Args))
 	if len(os.Args) != 3 {
 		log.Fatal("Usage: run <config_file> <waiting_time>")
 		return
@@ -84,5 +83,3 @@ func engine() {
 		log.Fatal(err)
 	}
 }
-
-
