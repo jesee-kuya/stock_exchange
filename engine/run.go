@@ -9,11 +9,25 @@ import (
 	"github.com/jesee-kuya/stock_exchange/util"
 )
 
+// runningProcess represents a process that is currently executing.
+// It tracks the process instance and the remaining delay until completion.
 type runningProcess struct {
-	Process *process.Process
-	Delay   int
+	Process *process.Process // The process being executed
+	Delay   int              // Remaining cycles until the process completes
 }
 
+// Run executes the stock exchange optimization algorithm for the specified duration.
+// It implements a priority-based parallel schedule generation scheme that:
+// 1. Schedules processes based on their priority (derived from optimization targets)
+// 2. Runs multiple processes concurrently when resources allow
+// 3. Respects process dependencies and resource constraints
+// 4. Stops when the time limit is reached or no more processes can be scheduled
+//
+// Parameters:
+//   - waitingTime: Maximum execution time in string format (e.g., "10s", "5m")
+//
+// The function prints the execution schedule and final stock state.
+// It generates a log file with the schedule in the format "cycle:process_name".
 func (e *Engine) Run(waitingTime string) {
 	maxSeconds, err := util.ParseDuration(waitingTime)
 	if err != nil {
@@ -142,6 +156,16 @@ func (e *Engine) Run(waitingTime string) {
 	printStock(e.Stock)
 }
 
+// updateRunningProcesses decrements the delay of all running processes and
+// completes those whose delay has reached zero.
+// When a process completes, its results are added to the engine's stock.
+//
+// Parameters:
+//   - running: Slice of currently running processes
+//   - e: The engine instance to update stock when processes complete
+//
+// Returns:
+//   - Updated slice of running processes with completed ones removed
 func updateRunningProcesses(running []runningProcess, e *Engine) []runningProcess {
 	next := []runningProcess{}
 	for _, rp := range running {
@@ -157,6 +181,11 @@ func updateRunningProcesses(running []runningProcess, e *Engine) []runningProces
 	return next
 }
 
+// canRunAny checks if any process in the engine can be executed
+// with the current stock levels.
+//
+// Returns:
+//   - true if at least one process can run, false otherwise
 func (e *Engine) canRunAny() bool {
 	for _, p := range e.Processes {
 		if p.CanRun(e.Stock.Items) {
@@ -166,6 +195,25 @@ func (e *Engine) canRunAny() bool {
 	return false
 }
 
+// computePriorities calculates priority values for all processes based on
+// their relationship to optimization targets using a breadth-first search approach.
+// Processes that directly produce optimization targets get priority 0,
+// processes that produce inputs for those get priority 1, and so on.
+// This implements a backward chaining algorithm to establish process dependencies.
+//
+// Priority calculation logic:
+// - Direct producers of optimization targets: priority 0 (highest)
+// - Processes that support direct producers: priority 1
+// - Processes that support priority 1 processes: priority 2
+// - And so on...
+// - Unreachable processes get the lowest priority (max + 1)
+//
+// Parameters:
+//   - processes: All available processes
+//   - targets: Map of optimization target items
+//
+// Returns:
+//   - Map of process names to their priority values (lower = higher priority)
 func computePriorities(processes []*process.Process, targets map[string]bool) map[string]int {
 	prio := map[string]int{}
 	visited := map[string]bool{}
@@ -174,6 +222,7 @@ func computePriorities(processes []*process.Process, targets map[string]bool) ma
 		Depth int
 	}{}
 
+	// Initialize with processes that directly produce optimization targets
 	for _, p := range processes {
 		for result := range p.Result {
 			if targets[result] {
@@ -186,6 +235,7 @@ func computePriorities(processes []*process.Process, targets map[string]bool) ma
 		}
 	}
 
+	// Breadth-first search to assign priorities based on dependency depth
 	for len(queue) > 0 {
 		curr := queue[0]
 		queue = queue[1:]
@@ -199,6 +249,7 @@ func computePriorities(processes []*process.Process, targets map[string]bool) ma
 			}
 		}
 
+		// Find processes that produce what this process needs
 		for need := range proc.Needs {
 			for _, p := range processes {
 				if _, ok := p.Result[need]; ok {
@@ -214,7 +265,7 @@ func computePriorities(processes []*process.Process, targets map[string]bool) ma
 		}
 	}
 
-	// Fallback for unreachable
+	// Assign fallback priority for processes not reachable from targets
 	max := 0
 	for _, v := range prio {
 		if v > max {
@@ -230,6 +281,11 @@ func computePriorities(processes []*process.Process, targets map[string]bool) ma
 	return prio
 }
 
+// printStock displays the final state of all stock items in alphabetical order.
+// This provides a clear summary of remaining resources after process execution.
+//
+// Parameters:
+//   - stock: The stock instance containing all items and their quantities
 func printStock(stock *Stock) {
 	fmt.Println("Stock:")
 	keys := make([]string, 0, len(stock.Items))
