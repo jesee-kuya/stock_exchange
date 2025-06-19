@@ -36,86 +36,102 @@ func (e *Engine) Run(waitingTime string) {
 	}
 
 	priorities := computePriorities(e.Processes, targets)
+	timeExceeded := false
 
 	for {
+		// Check time limit but don't break immediately if processes are still running
 		if time.Since(start).Seconds() >= float64(maxSeconds) {
-			fmt.Printf("Time limit exceeded after %d cycles\n", e.Cycle)
-			break
+			timeExceeded = true
 		}
 
 		running = updateRunningProcesses(running, e)
 
-		// Get all runnable processes for this cycle
-		runnable := []*process.Process{}
-		for _, p := range e.Processes {
-			if p.CanRun(e.Stock.Items) {
-				runnable = append(runnable, p)
+		// Only schedule new processes if time hasn't exceeded
+		if !timeExceeded {
+			// Get all runnable processes for this cycle
+			runnable := []*process.Process{}
+			for _, p := range e.Processes {
+				if p.CanRun(e.Stock.Items) {
+					runnable = append(runnable, p)
+				}
 			}
-		}
 
-		// Sort by priority (descending) and then by name (descending)
-		sort.Slice(runnable, func(i, j int) bool {
-			pi, pj := priorities[runnable[i].Name], priorities[runnable[j].Name]
-			if pi == pj {
-				return runnable[i].Name > runnable[j].Name
+			// Sort by priority (descending) and then by name (descending)
+			sort.Slice(runnable, func(i, j int) bool {
+				pi, pj := priorities[runnable[i].Name], priorities[runnable[j].Name]
+				if pi == pj {
+					return runnable[i].Name > runnable[j].Name
+				}
+				return pi > pj
+			})
+
+			// Use a copy of stock for simulation
+			stockCopy := make(map[string]int)
+			for k, v := range e.Stock.Items {
+				stockCopy[k] = v
 			}
-			return pi > pj
-		})
 
-		// Use a copy of stock for simulation
-		stockCopy := make(map[string]int)
-		for k, v := range e.Stock.Items {
-			stockCopy[k] = v
-		}
-
-		scheduledCount := make(map[*process.Process]int)
-		changed := true
-		for changed {
-			changed = false
-			for _, p := range runnable {
-				if p.CanRun(stockCopy) {
-					// Consume resources in the simulated stock
-					for item, qty := range p.Needs {
-						stockCopy[item] -= qty
+			scheduledCount := make(map[*process.Process]int)
+			changed := true
+			for changed {
+				changed = false
+				for _, p := range runnable {
+					if p.CanRun(stockCopy) {
+						// Consume resources in the simulated stock
+						for item, qty := range p.Needs {
+							stockCopy[item] -= qty
+						}
+						scheduledCount[p]++
+						changed = true
 					}
-					scheduledCount[p]++
-					changed = true
 				}
 			}
-		}
 
-		// Schedule the processes and update real stock
-		scheduledEntries := []string{}
-		for _, p := range runnable {
-			count := scheduledCount[p]
-			for i := 0; i < count; i++ {
-				// Update real stock
-				for item, qty := range p.Needs {
-					e.Stock.Items[item] -= qty
+			// Schedule the processes and update real stock
+			scheduledEntries := []string{}
+			for _, p := range runnable {
+				count := scheduledCount[p]
+				for i := 0; i < count; i++ {
+					// Update real stock
+					for item, qty := range p.Needs {
+						e.Stock.Items[item] -= qty
+					}
+					// Add to running processes
+					running = append(running, runningProcess{
+						Process: p,
+						Delay:   p.Cycle,
+					})
+					// Create schedule entry
+					entry := fmt.Sprintf(" %d:%s", e.Cycle, p.Name)
+					scheduledEntries = append(scheduledEntries, entry)
+					e.Schedule = append(e.Schedule, entry)
 				}
-				// Add to running processes
-				running = append(running, runningProcess{
-					Process: p,
-					Delay:   p.Cycle,
-				})
-				// Create schedule entry
-				entry := fmt.Sprintf(" %d:%s", e.Cycle, p.Name)
-				scheduledEntries = append(scheduledEntries, entry)
-				e.Schedule = append(e.Schedule, entry)
 			}
-		}
 
-		// Print all entries for this cycle
-		for _, entry := range scheduledEntries {
-			fmt.Println(entry)
-		}
+			// Print all entries for this cycle
+			for _, entry := range scheduledEntries {
+				fmt.Println(entry)
+			}
 
-		if len(running) == 0 && !e.canRunAny() {
-			fmt.Printf("No more process doable at cycle %d\n", e.Cycle + 1)
-			break
+			// Check if we can continue (only if time hasn't exceeded)
+			if len(running) == 0 && !e.canRunAny() {
+				fmt.Printf("No more process doable at cycle %d\n", e.Cycle+1)
+				break
+			}
+		} else {
+			// Time exceeded, just let running processes complete
+			if len(running) == 0 {
+				break
+			}
 		}
 
 		e.Cycle++
+
+		// If time exceeded and no processes are running, we can safely exit
+		if timeExceeded && len(running) == 0 {
+			fmt.Printf("Time limit exceeded after %d cycles\n", e.Cycle)
+			break
+		}
 	}
 
 	printStock(e.Stock)
