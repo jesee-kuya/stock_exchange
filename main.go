@@ -20,7 +20,7 @@ func main() {
 		fmt.Println("Usage:")
 		fmt.Println("  Schedule: go run . <config_file> <log_output_file> <wait_time>")
 		fmt.Println("  Check:    go run . ./checker <config_file> <log_file>")
-		os.Exit(1)
+		return
 	}
 
 	mode := args[1]
@@ -29,7 +29,7 @@ func main() {
 	case "./checker":
 		if len(args) != 4 {
 			fmt.Println("Usage: go run . check <config_file> <log_file>")
-			os.Exit(1)
+			return
 		}
 
 		configPath := args[2]
@@ -39,17 +39,17 @@ func main() {
 
 		if err := chk.LoadConfig(configPath); err != nil {
 			fmt.Printf("Error loading config: %v\n", err)
-			os.Exit(1)
+			return
 		}
 
 		if err := chk.LoadLog(logPath); err != nil {
 			fmt.Printf("Error loading log: %v\n", err)
-			os.Exit(1)
+			return
 		}
 
 		if err := chk.Verify(); err != nil {
 			fmt.Printf("Verification failed: %v\n", err)
-			os.Exit(1)
+			return
 		}
 
 	default:
