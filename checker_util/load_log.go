@@ -21,12 +21,13 @@ import (
 //
 // Returns:
 //   - error: An error if the file cannot be opened or if there is an issue during scanning.
-//            Returns nil if the log is successfully loaded.
+//     Returns nil if the log is successfully loaded.
 //
 // Example log file format:
-//   1:ProcessA
-//   2:ProcessB
-//   3:ProcessC
+//
+//	1:ProcessA
+//	2:ProcessB
+//	3:ProcessC
 func (c *Checker) LoadLog(path string) error {
 	file, err := os.Open(path)
 	if err != nil {

@@ -18,10 +18,9 @@ func (c *Checker) LoadConfig(path string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	c.Stocks = configData.Stocks
 	c.Processes = configData.Processes
-	
 
 	return nil
 }
