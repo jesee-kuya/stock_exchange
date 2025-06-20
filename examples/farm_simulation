@@ -1,0 +1,21 @@
+#
+# Farm simulation with some finite and some renewable resources
+# Some processes can run indefinitely while others will stop
+#
+# Initial stocks
+seed:20
+water:100
+fertilizer:15
+money:50
+vegetable:0
+compost:0
+
+# Processes
+buy_supplies:(money:10):(seed:20;fertilizer:5):2
+plant_seed:(seed:2;water:5;fertilizer:1):(planted_field:1):3
+grow_vegetables:(planted_field:1;water:10):(vegetable:10;compost:2):10
+sell_vegetables:(vegetable:8):(money:16):1
+make_fertilizer:(compost:5):(fertilizer:3):4
+
+# Optimize for money and continuous operation
+optimize:(money;time)
