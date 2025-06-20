@@ -1,0 +1,16 @@
+#
+# Ultra-Simple Bread Factory
+# Will stop when flour runs out
+#
+# Initial stocks
+flour:10
+yeast:6
+bread:0
+
+
+# Processes
+make_bread:(flour:2; yeast:1):(bread:3):4
+sell_bread:(bread:1):(ksh:65):1 
+
+# Optimize for time until termination
+optimize:(ksh)

@@ -1,0 +1,14 @@
+#
+# Self-sustaining bread factory example
+# Can run indefinitely with proper scheduling
+#
+# Initial stocks
+water:10
+you:1
+
+# Processes
+run:(water:5):(joy:5):1
+rest:(you:1):(water:2;you:1):3
+
+# Optimize for continuous production and money
+optimize:(time;joy)
