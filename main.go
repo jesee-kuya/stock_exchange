@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/jesee-kuya/stock_exchange/checker"
 	e "github.com/jesee-kuya/stock_exchange/engine"
 )
 
@@ -19,42 +18,11 @@ func main() {
 	if len(args) < 2 {
 		fmt.Println("Usage:")
 		fmt.Println("  Schedule: go run . <config_file> <log_output_file> <wait_time>")
-		fmt.Println("  Check:    go run . ./checker <config_file> <log_file>")
+		fmt.Println("  Check:    go run ./checker <config_file> <log_file>")
 		return
 	}
 
-	mode := args[1]
-
-	switch mode {
-	case "./checker":
-		if len(args) != 4 {
-			fmt.Println("Usage: go run . check <config_file> <log_file>")
-			return
-		}
-
-		configPath := args[2]
-		logPath := args[3]
-
-		chk := checker.NewChecker()
-
-		if err := chk.LoadConfig(configPath); err != nil {
-			fmt.Printf("Error loading config: %v\n", err)
-			return
-		}
-
-		if err := chk.LoadLog(logPath); err != nil {
-			fmt.Printf("Error loading log: %v\n", err)
-			return
-		}
-
-		if err := chk.Verify(); err != nil {
-			fmt.Printf("Verification failed: %v\n", err)
-			return
-		}
-
-	default:
-		engine()
-	}
+	engine()
 }
 
 // engine is responsible for running the stock exchange engine in scheduling mode.
