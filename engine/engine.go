@@ -14,7 +14,6 @@ type Engine struct {
 	OptimizeTargets []string
 }
 
-
 // Stock represents the available items in the system.
 // The Items map stores item names as keys and their corresponding quantities as values.
 type Stock struct {
