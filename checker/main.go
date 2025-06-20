@@ -9,13 +9,13 @@ import (
 
 func main() {
 	args := os.Args
-	if len(args) != 4 {
-		fmt.Println("Usage: go run .checker <config_file> <log_file>")
+	if len(args) != 3 {
+		fmt.Println("Usage: go run ./checker <config_file> <log_file>")
 		return
 	}
 
-	configPath := args[2]
-	logPath := args[3]
+	configPath := args[1]
+	logPath := args[2]
 
 	chk := checker.NewChecker()
 
